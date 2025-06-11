@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema(
 	{
+		// phoneNumber?
 		username: {
 			type: String,
 			required: [true, 'Username is required'],
@@ -190,8 +191,6 @@ const userSchema = new mongoose.Schema(
 );
 
 // Indexes for better search performance
-userSchema.index({ username: 1 });
-userSchema.index({ email: 1 });
 userSchema.index({ 'profile.firstName': 1, 'profile.lastName': 1 });
 userSchema.index({ createdAt: -1 });
 

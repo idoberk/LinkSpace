@@ -20,6 +20,7 @@ app.get('/api/test', (req, res) => {
 	res.json({ message: 'LinkSpace API is working!' });
 });
 
+app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 
 app.use((err, req, res, next) => {
