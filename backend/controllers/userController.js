@@ -1,5 +1,7 @@
 const User = require('../models/User');
 
+// Operations users can do with other users (search users, send friend requests, etc...)
+
 const getAllUsers = async (req, res) => {
 	try {
 		const {
@@ -159,4 +161,160 @@ const searchUser = async (req, res) => {
 	}
 };
 
-module.exports = { getAllUsers, getUserById, searchUser };
+const sendFriendRequest = async (req, res) => {
+	try {
+		const senderId = req.user.userId;
+		const receiverId = req.params.id;
+
+		if (senderId === receiverId) {
+			return res
+				.status(400)
+				.json({ error: 'Cannot send friend request to yourself' });
+		}
+		const sender = await User.findById(senderId);
+		const receiver = await User.findById(receiverId);
+
+		if (!receiver) {
+			return res.status(404).json({ error: 'User not found' });
+		}
+
+		if (sender.isFriendsWith(receiverId)) {
+			return res
+				.status(400)
+				.json({ error: 'Already friends with this user' });
+		}
+
+		const existingRequest = sender.friendRequests.sent.find(
+			(req) => req.user.toString() === receiverId,
+		);
+
+		if (existingRequest) {
+			return res
+				.status(400)
+				.json({ error: 'Friend request already sent' });
+		}
+
+		sender.friendRequests.sent.push({ user: receiverId });
+		receiver.friendRequests.received.push({ user: senderId });
+
+		await sender.save();
+		await receiver.save();
+
+		res.json({ message: 'Friend request sent successfully' });
+	} catch (error) {
+		res.status(500).json({ error: 'Error sending friend request' });
+	}
+};
+
+const acceptFriendRequest = async (req, res) => {
+	try {
+		const userId = req.user.userId;
+		const friendId = req.params.id;
+
+		const user = await User.findById(userId);
+		const friend = await User.findById(friendId);
+
+		if (!friend) {
+			return res.status(404).json({ error: 'User not found' });
+		}
+
+		const requestIndex = user.friendRequests.received.findIndex(
+			(req) => req.user.toString() === friendId,
+		);
+
+		if (requestIndex === -1) {
+			return res
+				.status(400)
+				.json({ error: 'No friend request from this user' });
+		}
+
+		user.friendRequests.received.splice(requestIndex, 1);
+
+		const sentIndex = friend.friendRequests.sent.findIndex(
+			(req) => req.user.toString() === userId,
+		);
+
+		if (sentIndex !== -1) {
+			friend.friendRequests.sent.splice(sentIndex, 1);
+		}
+
+		user.friends.push(friendId);
+		friend.friends.push(userId);
+
+		user.stats.totalFriends = user.friends.length;
+		friend.stats.totalFriends = friend.friends.length;
+
+		await user.save();
+		await friend.save();
+
+		res.json({ message: 'Friend request accepted' });
+	} catch (error) {
+		res.status(500).json({ error: 'Error accepting friend request' });
+	}
+};
+
+const rejectFriendRequest = async (req, res) => {
+	try {
+		const userId = req.user.userId;
+		const friendId = req.params.id;
+
+		const user = await User.findById(userId);
+		const friend = await User.findById(friendId);
+
+		if (!friend) {
+			return res.status(404).json({ error: 'User not found' });
+		}
+
+		user.friendRequests.received = user.friendRequests.received.filter(
+			(req) => req.user.toString() !== friendId,
+		);
+
+		friend.friendRequests.sent = friend.friendRequests.sent.filter(
+			(req) => req.user.toString() !== userId,
+		);
+
+		await user.save();
+		await friend.save();
+
+		res.json({ message: 'Friend request rejected' });
+	} catch (error) {
+		res.status(500).json({ error: 'Error rejecting friend request' });
+	}
+};
+
+const removeFriend = async (req, res) => {
+	try {
+		const userId = req.user.userId;
+		const friendId = req.params.id;
+
+		const user = await User.findById(userId);
+		const friend = await User.findById(friendId);
+
+		if (!friend) {
+			return res.status(404).json({ error: 'User not found' });
+		}
+
+		user.friends = user.friends.filter((f) => f.toString() !== friendId);
+		friend.friends = friend.friends.filter((f) => f.toString() !== userId);
+
+		user.stats.totalFriends = user.friends.length;
+		friend.stats.totalFriends = friend.friends.length;
+
+		await user.save();
+		await friend.save();
+
+		res.json({ message: 'Friend removed successfully' });
+	} catch (error) {
+		res.status(500).json({ error: 'Error removing friend' });
+	}
+};
+
+module.exports = {
+	getAllUsers,
+	getUserById,
+	searchUser,
+	sendFriendRequest,
+	acceptFriendRequest,
+	rejectFriendRequest,
+	removeFriend,
+};

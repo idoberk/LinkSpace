@@ -9,4 +9,8 @@ router.post('/login', authController.login);
 router.post('/logout', authenticate, authController.logout);
 router.get('/profile', authenticate, authController.userProfile);
 
+router.put('/profile', authenticate, authController.updateUser);
+
+router.delete('/account', authenticate, authController.deleteUser);
+
 module.exports = router;
