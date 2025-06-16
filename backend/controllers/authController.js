@@ -1,6 +1,45 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+const handleErrors = (error) => {
+	const errors = {};
+
+	// Duplicate Key Error (MongoDB)
+	if (error.code === 11000) {
+		const field = Object.keys(error.keyPattern)[0];
+		errors[field] = `${field} is already in use`;
+		errors.status = 409;
+
+		return errors;
+	}
+
+	// Validation Errors
+	if (error.name === 'ValidationError') {
+		Object.values(error.errors).forEach(({ properties }) => {
+			errors[properties.path] = properties.message;
+		});
+		errors.status = 400;
+	}
+
+	// JWT Errors
+	if (error.name === 'JsonWebTokenError') {
+		errors.message = 'Invalid token';
+		errors.status = 401;
+	}
+
+	if (error.name === 'TokenExpiredError') {
+		errors.message = 'Token has expired';
+		errors.status = 401;
+	}
+
+	// Custom Error Messages
+	if (error.message && !error.errors) {
+		errors.message = error.message;
+	}
+
+	return errors;
+};
+
 const generateToken = (userId) => {
 	return jwt.sign({ userId }, process.env.JWT_SECRET, {
 		expiresIn: process.env.JWT_EXPIRE || '7d',
@@ -8,26 +47,29 @@ const generateToken = (userId) => {
 };
 
 const register = async (req, res) => {
-	try {
-		const { username, email, password } = req.body;
+	const { email, password, firstName, lastName } = req.body;
 
-		const existingUser = await User.findOne({
-			$or: [{ email }, { username }],
-		});
+	try {
+		// Check for existing user first
+		const existingUser = await User.findOne({ email });
 
 		if (existingUser) {
-			return res.status(409).json({
-				error:
-					existingUser.email === email
-						? 'Email already in use'
-						: 'Username already taken',
-			});
+			const error = new Error('Duplicate key error');
+			error.code = 11000;
+			// Use the actual field that caused the conflict
+			error.keyPattern = {
+				email: 1,
+			};
+			throw error;
 		}
 
 		const user = new User({
-			username,
 			email,
 			password,
+			profile: {
+				firstName,
+				lastName,
+			},
 		});
 
 		await user.save();
@@ -43,34 +85,22 @@ const register = async (req, res) => {
 			user: userResponse,
 		});
 	} catch (error) {
-		if (error.name === 'ValidationError') {
-			const errors = Object.values(error.errors).map(
-				(err) => err.message,
-			);
-
-			return res.status(400).json({ errors });
-		}
-		res.status(500).json({
-			error: 'An error occurred while trying to register user',
-		});
+		const errors = handleErrors(error);
+		res.status(errors.status).json({ errors });
 	}
 };
-const login = async (req, res) => {
-	try {
-		const { username, email, password } = req.body;
 
-		if (!username && !email) {
+const login = async (req, res) => {
+	const { email, password } = req.body;
+
+	try {
+		if (!email) {
 			return res.status(400).json({
-				error: 'Please provide username or email',
+				error: 'Please provide an Email',
 			});
 		}
 
-		const user = await User.findOne({
-			$or: [
-				{ username: username || undefined },
-				{ email: email || undefined },
-			].filter(Boolean),
-		});
+		const user = await User.findOne({ email });
 
 		if (!user) {
 			return res.status(401).json({
@@ -82,7 +112,7 @@ const login = async (req, res) => {
 
 		if (!isPasswordValid) {
 			return res.status(401).json({
-				error: 'Invalid credentials',
+				error: 'Invalid Password',
 			});
 		}
 
@@ -101,10 +131,42 @@ const login = async (req, res) => {
 			user: userResponse,
 		});
 	} catch (error) {
-		res.status(500).json({
-			error: 'An error occurred while trying to login',
-		});
+		const { message, status } = handleErrors(error);
+		res.status(status).json({ error: message });
 	}
 };
 
-module.exports = { register, login };
+const logout = async (req, res) => {
+	const user = await User.findById(req.user.userId);
+
+	try {
+		if (user) {
+			user.status.isOnline = false;
+			user.status.lastSeen = new Date();
+
+			await user.save();
+		}
+
+		res.json({ message: 'Logged out successfully' });
+	} catch (error) {
+		const errors = handleErrors(error);
+		res.status(errors.status).json({ error: errors.message });
+	}
+};
+
+const userProfile = async (req, res) => {
+	const user = await User.findById(req.user.userId).select('-password');
+
+	try {
+		if (!user) {
+			return res.status(404).json({ error: 'User not found' });
+		}
+
+		res.json(user);
+	} catch (error) {
+		const errors = handleErrors(error);
+		res.status(errors.status).json({ error: errors.message });
+	}
+};
+
+module.exports = { register, login, logout, userProfile };

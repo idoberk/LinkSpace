@@ -1,20 +1,18 @@
 const validator = require('validator');
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema(
 	{
 		// phoneNumber?
-		username: {
+		/* username: {
 			type: String,
 			required: [true, 'Username is required'],
 			unique: true,
 			trim: true,
-			minLength: [
-				3,
-				'Username must be at least 3 characters long, got {VALUE}',
-			],
+			minLength: [3, 'Username must be at least 3 characters long'],
 			maxLength: [30, 'Username cannot exceed 30 characters'],
-		},
+		}, */
 		email: {
 			type: String,
 			required: [true, 'Email is required'],
@@ -29,27 +27,30 @@ const userSchema = new mongoose.Schema(
 		password: {
 			type: String,
 			required: [true, 'Password is required'],
-			minLength: [
-				6,
-				'Password must be at least 6 characters long, got {VALUE}',
-			],
+			minLength: [6, 'Password must be at least 6 characters long'],
 		},
 		profile: {
 			firstName: {
 				type: String,
+				required: [true, 'First name is required'],
 				trim: true,
-				maxLength: [
-					20,
-					'First name cannot exceed 20 characters, got {VALUE}',
-				],
+				minLength: [2, 'First name must be at least 2 characters long'],
+				maxLength: [20, 'First name cannot exceed 20 characters'],
+				validate: {
+					validator: validator.isAlpha,
+					message: 'Name must only contain letters',
+				},
 			},
 			lastName: {
 				type: String,
+				required: [true, 'Last name is required'],
 				trim: true,
-				maxLength: [
-					20,
-					'Last name cannot exceed 20 characters, got {VALUE}',
-				],
+				minLength: [2, 'Last name must be at least 2 characters long'],
+				maxLength: [20, 'Last name cannot exceed 20 characters'],
+				validate: {
+					validator: validator.isAlpha,
+					message: 'Name must only contain letters',
+				},
 			},
 			birthDate: {
 				type: Date,
@@ -60,10 +61,7 @@ const userSchema = new mongoose.Schema(
 			},
 			bio: {
 				type: String,
-				maxLength: [
-					150,
-					'Bio cannot exceed 150 characters, got {VALUE}',
-				],
+				maxLength: [150, 'Bio cannot exceed 150 characters'],
 				default: '',
 			},
 			address: {
@@ -119,6 +117,10 @@ const userSchema = new mongoose.Schema(
 		},
 		status: {
 			isOnline: {
+				type: Boolean,
+				default: false,
+			},
+			isActive: {
 				type: Boolean,
 				default: false,
 			},
@@ -194,10 +196,23 @@ const userSchema = new mongoose.Schema(
 userSchema.index({ 'profile.firstName': 1, 'profile.lastName': 1 });
 userSchema.index({ createdAt: -1 });
 
+// Fire function BEFORE a doc has been saved to the database
+userSchema.pre('save', async function (next) {
+	// Only hash the password if it has been modified or it is new
+	if (!this.isModified('password')) {
+		return next();
+	}
+
+	// Hashing the passwords before saving the user to the database.
+	const salt = await bcrypt.genSalt();
+	this.password = await bcrypt.hash(this.password, salt);
+	next();
+});
+
 const FIELD_GROUPS = {
 	contactInfo: ['email', 'phone'],
 	personalInfo: ['birthDate', 'bio'],
-	locationInfo: ['address'],
+	locationInfo: ['address', 'city'],
 };
 
 userSchema.methods.getPublicProfile = function (viewerId) {
@@ -205,7 +220,7 @@ userSchema.methods.getPublicProfile = function (viewerId) {
 	const isFriend = viewerId && this.isFriendsWith(viewerId);
 	const publicProfile = {
 		id: this._id,
-		username: this.username,
+		displayName: this.profile.fullName,
 		profile: {
 			firstName: this.profile.firstName,
 			lastName: this.profile.lastName,
@@ -236,15 +251,15 @@ userSchema.methods.getPublicProfile = function (viewerId) {
 };
 
 userSchema.virtual('profile.fullName').get(function () {
-	if (this.profile.firstName && this.profile.lastName) {
-		return `${this.profile.firstName} ${this.profile.lastName}`;
-	}
+	return `${this.profile.firstName} ${this.profile.lastName}`;
+});
 
-	return this.profile.firstName || this.profile.lastName || this.username;
+userSchema.virtual('displayName').get(function () {
+	return this.profile.fullName;
 });
 
 userSchema.methods.comparePassword = async function (candidatePassword) {
-	return this.password === candidatePassword;
+	return await bcrypt.compare(candidatePassword, this.password);
 };
 
 userSchema.methods.isFriendsWith = function (userId) {
