@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { handleErrors } = require('../utils/errorHandler');
 
 // Operations users can do with other users (search users, send friend requests, etc...)
 
@@ -47,7 +48,8 @@ const getAllUsers = async (req, res) => {
 			},
 		});
 	} catch (error) {
-		res.status(500).json({ error: 'Error fetching users' });
+		const errors = handleErrors(error);
+		res.status(errors.status || 500).json({ errors });
 	}
 };
 
@@ -66,7 +68,8 @@ const getUserById = async (req, res) => {
 
 		res.json(publicProfile);
 	} catch (error) {
-		res.status(500).json({ error: error.message });
+		const errors = handleErrors(error);
+		res.status(errors.status || 500).json({ errors });
 	}
 };
 
@@ -157,7 +160,8 @@ const searchUser = async (req, res) => {
 			},
 		});
 	} catch (error) {
-		res.status(500).json({ error: 'Error searching users' });
+		const errors = handleErrors(error);
+		res.status(errors.status || 500).json({ errors });
 	}
 };
 
@@ -202,7 +206,8 @@ const sendFriendRequest = async (req, res) => {
 
 		res.json({ message: 'Friend request sent successfully' });
 	} catch (error) {
-		res.status(500).json({ error: 'Error sending friend request' });
+		const errors = handleErrors(error);
+		res.status(errors.status || 500).json({ errors });
 	}
 };
 
@@ -249,7 +254,8 @@ const acceptFriendRequest = async (req, res) => {
 
 		res.json({ message: 'Friend request accepted' });
 	} catch (error) {
-		res.status(500).json({ error: 'Error accepting friend request' });
+		const errors = handleErrors(error);
+		res.status(errors.status || 500).json({ errors });
 	}
 };
 
@@ -278,7 +284,8 @@ const rejectFriendRequest = async (req, res) => {
 
 		res.json({ message: 'Friend request rejected' });
 	} catch (error) {
-		res.status(500).json({ error: 'Error rejecting friend request' });
+		const errors = handleErrors(error);
+		res.status(errors.status || 500).json({ errors });
 	}
 };
 
@@ -305,7 +312,8 @@ const removeFriend = async (req, res) => {
 
 		res.json({ message: 'Friend removed successfully' });
 	} catch (error) {
-		res.status(500).json({ error: 'Error removing friend' });
+		const errors = handleErrors(error);
+		res.status(errors.status || 500).json({ errors });
 	}
 };
 
