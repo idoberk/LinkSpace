@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const { handleErrors } = require('../utils/errorHandler');
+const { handleErrors } = require('../middleware/errorHandler');
 
 // Operations users can do with other users (search users, send friend requests, etc...)
 

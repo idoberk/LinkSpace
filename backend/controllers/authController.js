@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { handleErrors } = require('../utils/errorHandler');
+const { handleErrors } = require('../middleware/errorHandler');
 
 // Operations users can do with their own account (login, register, update, delete, get own profile, etc...)
 
@@ -11,9 +11,8 @@ const generateToken = (userId) => {
 };
 
 const register = async (req, res) => {
-	const { email, password, firstName, lastName } = req.body;
-
 	try {
+		const { email, password, firstName, lastName } = req.body;
 		// Check for existing user first
 		const existingUser = await User.findOne({ email });
 
@@ -55,9 +54,9 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res) => {
-	const { email, password } = req.body;
-
 	try {
+		const { email, password } = req.body;
+
 		if (!email) {
 			return res.status(400).json({
 				error: 'Please provide an Email',
@@ -103,9 +102,9 @@ const login = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-	const user = await User.findById(req.user.userId);
-
 	try {
+		const user = await User.findById(req.user.userId);
+
 		if (user) {
 			user.status.isOnline = false;
 			user.status.lastSeen = new Date();
@@ -123,10 +122,11 @@ const logout = async (req, res) => {
 };
 
 const deleteUser = async (req, res) => {
-	// Verify password before deletion -- OPTIONAL
-	const { password } = req.body;
-	const user = await User.findById(req.user.userId);
 	try {
+		// Verify password before deletion -- OPTIONAL
+		const { password } = req.body;
+		const user = await User.findById(req.user.userId);
+
 		if (!user) {
 			return res.status(404).json({ error: 'User not found' });
 		}
@@ -150,11 +150,11 @@ const deleteUser = async (req, res) => {
 };
 
 const updateUser = async (req, res) => {
-	const { password, currentPassword, profile, settings } = req.body;
-	const userId = req.user.userId;
-	const user = await User.findById(userId);
-
 	try {
+		const { password, currentPassword, profile, settings } = req.body;
+		const userId = req.user.userId;
+		const user = await User.findById(userId);
+
 		if (!user) {
 			return res.status(404).json({ error: 'User not found' });
 		}
@@ -241,9 +241,9 @@ const updateUser = async (req, res) => {
 };
 
 const userProfile = async (req, res) => {
-	const user = await User.findById(req.user.userId).select('-password');
-
 	try {
+		const user = await User.findById(req.user.userId).select('-password');
+
 		if (!user) {
 			return res.status(404).json({ error: 'User not found' });
 		}

@@ -31,6 +31,7 @@ const handleErrors = (error) => {
 	// Custom Error Messages
 	if (error.message && !error.errors) {
 		errors.message = error.message;
+		errors.status = 500;
 	}
 
 	return errors;
