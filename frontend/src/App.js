@@ -1,24 +1,64 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState } from 'react';
+import api from './lib/axios';
 
-function App() {
+export default function App() {
+	const [email, setEmail] = useState('');
+	const [password, setPassword] = useState('');
+	const [loading, setLoading] = useState(false);
+
+	const handleLogin = async () => {
+		setLoading(true);
+
+		try {
+			const res = await api.post('/auth/login', {
+				email,
+				password,
+			});
+
+			console.log('Login successful', {
+				message: res.data.message,
+				token: res.data.token,
+				user: res.data.user,
+			});
+		} catch (error) {
+			if (error.response) {
+				console.log('Login failed:', error.response.data.errors);
+			} else {
+				console.log('Network error:', error.message);
+			}
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	return (
-		<div className='App'>
-			<header className='App-header'>
-				<img src={logo} className='App-logo' alt='logo' />
-				<p>
-					Edit <code>src/App.js</code> and save to reload.
-				</p>
-				<a
-					className='App-link'
-					href='https://reactjs.org'
-					target='_blank'
-					rel='noopener noreferrer'>
-					Learn React
-				</a>
-			</header>
+		<div>
+			<div>
+				<h1>Login to LinkSpace</h1>
+				<div>
+					<div>
+						<label>Email</label>
+						<input
+							type='email'
+							value={email}
+							onChange={(e) => setEmail(e.target.value)}
+						/>
+					</div>
+					<div>
+						<label>Password</label>
+						<input
+							type='password'
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+						/>
+					</div>
+					<button
+						onClick={handleLogin}
+						disabled={loading || !email || !password}>
+						{loading ? 'Logging in...' : 'Login'}
+					</button>
+				</div>
+			</div>
 		</div>
 	);
 }
-
-export default App;
