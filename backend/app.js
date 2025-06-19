@@ -23,8 +23,8 @@ app.get('/api/test', (req, res) => {
 	res.json({ message: 'LinkSpace API is working!' });
 });
 
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/users', require('./routes/usersRoutes'));
+app.use('/api/account', require('./routes/accountRoutes'));
+app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/posts', require('./routes/postRoutes'));
 
 app.use((err, req, res, next) => {
