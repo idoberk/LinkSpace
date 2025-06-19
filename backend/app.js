@@ -7,7 +7,6 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // TODO: add date/time conversion --> MongoDB uses UTC timezone.
-// TODO: reformat all return errors to use the handleErrors method.
 
 const connectDB = async () => {
 	try {

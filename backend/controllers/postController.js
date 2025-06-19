@@ -2,20 +2,21 @@ const Post = require('../models/Post');
 const User = require('../models/User');
 const Group = require('../models/Group');
 const { handleErrors } = require('../middleware/errorHandler');
+const { createError } = require('../utils/errorUtils');
 
 // TODO: Timezone related places: searching objects (posts, comments...) based on dates.
-// TODO: Add update / delete post methods?
 
 const createPost = async (req, res) => {
 	try {
 		const { content, visibility, tags, groupId, media } = req.body;
 		const authorId = req.user.userId;
 
+		// If posting to a group, verify the user is a member of that group
 		if (groupId) {
 			const group = await Group.findById(groupId);
 
 			if (!group) {
-				return res.status(404).json({ error: 'Group not found' });
+				throw createError('Group not found', 404);
 			}
 
 			const isMember = group.members.some(
@@ -25,9 +26,10 @@ const createPost = async (req, res) => {
 			);
 
 			if (!isMember) {
-				return res.status(403).json({
-					error: 'You must be an approved member to post in this group',
-				});
+				throw createError(
+					'You must be an approved member to post in this group',
+					404,
+				);
 			}
 		}
 
@@ -83,6 +85,89 @@ const createPost = async (req, res) => {
 			message: 'Post created successfully',
 			post,
 		});
+	} catch (error) {
+		const errors = handleErrors(error);
+		res.status(errors.status).json({ errors });
+	}
+};
+
+const updatePost = async (req, res) => {
+	try {
+		const { content, visibility, tags, media } = req.body;
+		const postId = req.params.id;
+		// const userId = req.user.userId;
+		const post = await Post.findById(postId);
+
+		/* if (!post) {
+			throw createError('Post not found', 404);
+		}
+
+		if (post.author.toString() !== userId) {
+			throw createError('You can only update your own posts', 403);
+		} */
+
+		if (content !== undefined) {
+			post.content = content;
+		}
+
+		if (visibility !== undefined && !post.group) {
+			post.visibility = visibility;
+		}
+
+		if (tags !== undefined) {
+			post.tags = tags;
+		}
+
+		if (media !== undefined) {
+			post.media = media;
+		}
+
+		await post.save();
+		await post.populate(
+			'author',
+			'profile.firstName profile.lastName profile.avatar',
+		);
+
+		res.json({ message: 'Post updated successfully', post });
+	} catch (error) {
+		const errors = handleErrors(error);
+		res.status(errors.status).json({ errors });
+	}
+};
+
+const deletePost = async (req, res) => {
+	try {
+		const postId = req.params.id;
+		const userId = req.user.userId;
+		// const post = await Post.findById(postId);
+
+		let post = req.post;
+
+		if (post.group) {
+			post = await Post.findById(postId).populate('group');
+		}
+
+		/* if (!post) {
+			throw createError('Post not found', 404);
+		}
+
+		if (post.author.toString() !== userId) {
+			throw createError('You can only delete your own posts', 403);
+		} */
+
+		await Post.findByIdAndDelete(postId);
+
+		await User.findByIdAndUpdate(userId, {
+			$inc: { 'stats.totalPosts': -1 },
+		});
+
+		if (post.group) {
+			await Group.findByIdAndUpdate(post.group, {
+				$inc: { 'stats.totalPosts': -1 },
+			});
+		}
+
+		res.json({ message: 'Post deleted successfully' });
 	} catch (error) {
 		const errors = handleErrors(error);
 		res.status(errors.status).json({ errors });
@@ -253,6 +338,8 @@ const getAllPosts = async (req, res) => {
 
 module.exports = {
 	createPost,
+	updatePost,
+	deletePost,
 	searchPosts,
 	getAllPosts,
 };

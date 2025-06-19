@@ -47,6 +47,32 @@ const groupSchema = new mongoose.Schema(
 			},
 		],
 		rules: [String],
+		settings: {
+			ownershipTransfer: {
+				enabled: {
+					type: Boolean,
+					default: true,
+				},
+				requireApproval: {
+					type: Boolean,
+					default: false,
+				},
+				minimumMembersForTransfer: {
+					type: Number,
+					default: 2,
+				},
+			},
+			activity: {
+				lastActivity: {
+					type: Date,
+					default: Date.now,
+				},
+				activeMembersCount: {
+					type: Number,
+					default: 0,
+				},
+			},
+		},
 		stats: {
 			totalPosts: {
 				type: Number,
@@ -69,5 +95,8 @@ const groupSchema = new mongoose.Schema(
 // Index for search
 groupSchema.index({ name: 'text', description: 'text' });
 groupSchema.index({ category: 1, privacy: 1 });
+groupSchema.index({ creator: 1 });
+groupSchema.index({ 'members.user': 1 });
+groupSchema.index({ managers: 1 });
 
 module.exports = mongoose.model('Group', groupSchema);

@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const { handleErrors } = require('../middleware/errorHandler');
+const { createError } = require('../utils/errorUtils');
 
 // Operations users can do with other users (search users, send friend requests, etc...)
 
@@ -58,9 +59,7 @@ const getUserById = async (req, res) => {
 		const user = await User.findById(req.params.id).select('-password');
 
 		if (!user) {
-			return res.status(404).json({
-				error: 'User was not found',
-			});
+			throw createError('User not found', 404);
 		}
 
 		const viewerId = req.user?.userId;
@@ -171,21 +170,17 @@ const sendFriendRequest = async (req, res) => {
 		const receiverId = req.params.id;
 
 		if (senderId === receiverId) {
-			return res
-				.status(400)
-				.json({ error: 'Cannot send friend request to yourself' });
+			throw createError('Cannot send friend request to yourself', 400);
 		}
 		const sender = await User.findById(senderId);
 		const receiver = await User.findById(receiverId);
 
 		if (!receiver) {
-			return res.status(404).json({ error: 'User not found' });
+			throw createError('User not found', 404);
 		}
 
 		if (sender.isFriendsWith(receiverId)) {
-			return res
-				.status(400)
-				.json({ error: 'Already friends with this user' });
+			throw createError('Already friends with this user', 400);
 		}
 
 		const existingRequest = sender.friendRequests.sent.find(
@@ -193,9 +188,7 @@ const sendFriendRequest = async (req, res) => {
 		);
 
 		if (existingRequest) {
-			return res
-				.status(400)
-				.json({ error: 'Friend request already sent' });
+			throw createError('Friend request already sent', 400);
 		}
 
 		sender.friendRequests.sent.push({ user: receiverId });
@@ -220,7 +213,7 @@ const acceptFriendRequest = async (req, res) => {
 		const friend = await User.findById(friendId);
 
 		if (!friend) {
-			return res.status(404).json({ error: 'User not found' });
+			throw createError('User not found', 404);
 		}
 
 		const requestIndex = user.friendRequests.received.findIndex(
@@ -228,9 +221,7 @@ const acceptFriendRequest = async (req, res) => {
 		);
 
 		if (requestIndex === -1) {
-			return res
-				.status(400)
-				.json({ error: 'No friend request from this user' });
+			throw createError('No friend request from this user', 400);
 		}
 
 		user.friendRequests.received.splice(requestIndex, 1);
@@ -268,7 +259,7 @@ const rejectFriendRequest = async (req, res) => {
 		const friend = await User.findById(friendId);
 
 		if (!friend) {
-			return res.status(404).json({ error: 'User not found' });
+			throw createError('User not found', 404);
 		}
 
 		user.friendRequests.received = user.friendRequests.received.filter(
@@ -298,7 +289,7 @@ const removeFriend = async (req, res) => {
 		const friend = await User.findById(friendId);
 
 		if (!friend) {
-			return res.status(404).json({ error: 'User not found' });
+			throw createError('User not found', 404);
 		}
 
 		user.friends = user.friends.filter((f) => f.toString() !== friendId);

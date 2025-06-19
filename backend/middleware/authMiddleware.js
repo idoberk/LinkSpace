@@ -1,12 +1,14 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { handleErrors } = require('../middleware/errorHandler');
+const { createError } = require('../utils/errorUtils');
 
 const authenticate = async (req, res, next) => {
 	try {
 		const authHeader = req.headers.authorization;
 
 		if (!authHeader || !authHeader.startsWith('Bearer ')) {
-			return res.status(401).json({ error: 'No token provided' });
+			throw createError('No token provided', 401);
 		}
 
 		const token = authHeader.substring(7); // remove the Bearer prefix
@@ -14,7 +16,7 @@ const authenticate = async (req, res, next) => {
 		const user = await User.findById(decoded.userId).select('-password');
 
 		if (!user) {
-			return res.status(401).json({ error: 'User not found' });
+			throw createError('User not found', 404);
 		}
 
 		req.user = {
@@ -24,13 +26,8 @@ const authenticate = async (req, res, next) => {
 
 		next();
 	} catch (error) {
-		if (error.name === 'JsonWebTokenError') {
-			return res.status(401).json({ error: 'Invalid token' });
-		}
-		if (error.name === 'TokenExpiredError') {
-			return res.status(401).json({ error: 'Token expired' });
-		}
-		res.status(500).json({ error: 'Authentication error' });
+		const errors = handleErrors(error);
+		res.status(errors.status).json({ errors });
 	}
 };
 
