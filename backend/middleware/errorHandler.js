@@ -37,6 +37,26 @@ const handleErrors = (error) => {
 	return errors;
 };
 
+const handleUploadErrors = (error, req, res, next) => {
+	const errors = {};
+
+	if (error.code === 'LIMIT_FILE_SIZE') {
+		errors.message = 'File too large. Maximum size is 10MB.';
+		errors.status = 400;
+	} else if (error.code === 'LIMIT_FILE_COUNT') {
+		errors.message = 'Too many files. Maximum is 5 files.';
+		errors.status = 400;
+	} else if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+		errors.message = 'Unexpected field name for file upload.';
+		errors.status = 400;
+	} else {
+		return handleErrors(error);
+	}
+
+	return errors;
+};
+
 module.exports = {
 	handleErrors,
+	handleUploadErrors,
 };

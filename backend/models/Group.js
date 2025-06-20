@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { MAX_CONTENT_LENGTH } = require('../utils/constants');
 
 const groupSchema = new mongoose.Schema(
 	{
@@ -9,7 +10,7 @@ const groupSchema = new mongoose.Schema(
 		},
 		description: {
 			type: String,
-			maxLength: 350,
+			maxLength: MAX_CONTENT_LENGTH,
 		},
 		// category?
 		privacy: {

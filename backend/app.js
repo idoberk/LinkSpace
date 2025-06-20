@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const app = express();
 
@@ -9,16 +8,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // TODO: add date/time conversion --> MongoDB uses UTC timezone.
 
-const connectDB = async () => {
-	try {
-		await mongoose.connect(process.env.MONGODB_URI);
-		console.log('MongoDB connected to LinkSpace');
-	} catch (error) {
-		console.log('MongoDB connection error:', error);
-		process.exit(1);
-	}
-};
-
 app.get('/api/test', (req, res) => {
 	res.json({ message: 'LinkSpace API is working!' });
 });
@@ -26,6 +15,7 @@ app.get('/api/test', (req, res) => {
 app.use('/api/account', require('./routes/accountRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/posts', require('./routes/postRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes'));
 
 app.use((err, req, res, next) => {
 	console.error(err.stack);
@@ -36,4 +26,4 @@ app.use((req, res) => {
 	res.status(404).json({ error: 'Route not found' });
 });
 
-module.exports = { app, connectDB };
+module.exports = app;

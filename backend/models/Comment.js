@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { MAX_CONTENT_LENGTH } = require('../utils/constants');
 
 const commentSchema = new mongoose.Schema(
 	{
@@ -14,7 +15,7 @@ const commentSchema = new mongoose.Schema(
 		content: {
 			type: String,
 			required: true,
-			maxLength: 350,
+			maxLength: MAX_CONTENT_LENGTH,
 		},
 		parentComment: {
 			type: mongoose.Schema.Types.ObjectId,

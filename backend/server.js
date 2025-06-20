@@ -1,7 +1,8 @@
 require('dotenv').config();
 
 const { createServer } = require('http');
-const { app, connectDB } = require('./app');
+const app = require('./app');
+const connectDB = require('./config/db');
 
 const httpServer = createServer(app);
 

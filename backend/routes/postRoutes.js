@@ -7,8 +7,16 @@ const {
 	canViewPost,
 	isPostAuthor,
 } = require('../middleware/postMiddleware');
+const { uploadMultiple } = require('../middleware/uploadMiddleware');
+const { handleUploadErrors } = require('../middleware/errorHandler');
 
-router.post('/', authenticate, postController.createPost);
+router.post(
+	'/',
+	authenticate,
+	uploadMultiple,
+	handleUploadErrors,
+	postController.createPost,
+);
 router.get('/', optionalAuth, postController.getAllPosts);
 router.get(
 	'/search',

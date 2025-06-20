@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
+const { MAX_CONTENT_LENGTH } = require('../utils/constants');
 
 const postSchema = new mongoose.Schema(
 	{
 		content: {
 			type: String,
 			required: true,
-			maxLength: 350,
+			maxLength: MAX_CONTENT_LENGTH,
 		},
 		author: {
 			type: mongoose.Schema.Types.ObjectId,
@@ -20,10 +21,15 @@ const postSchema = new mongoose.Schema(
 			{
 				type: {
 					type: String,
-					enum: ['image', 'video', 'canvas'],
+					enum: ['image', 'video'],
 				},
 				url: String,
-				// Thumbnail?
+				publicId: String,
+				format: String,
+				width: String,
+				height: String,
+				bytes: Number,
+				// Thumbnail: String,?
 			},
 		],
 		comments: [

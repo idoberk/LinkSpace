@@ -1,6 +1,12 @@
 const validator = require('validator');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const {
+	MAX_CONTENT_LENGTH,
+	MIN_PASS_LENGTH,
+	MIN_FIRST_LAST_NAME_LENGTH,
+	MAX_FIRST_LAST_NAME_LENGTH,
+} = require('../utils/constants');
 
 const userSchema = new mongoose.Schema(
 	{
@@ -27,15 +33,24 @@ const userSchema = new mongoose.Schema(
 		password: {
 			type: String,
 			required: [true, 'Password is required'],
-			minLength: [6, 'Password must be at least 6 characters long'],
+			minLength: [
+				MIN_PASS_LENGTH,
+				`Password must be at least ${MIN_PASS_LENGTH} characters long`,
+			],
 		},
 		profile: {
 			firstName: {
 				type: String,
 				required: [true, 'First name is required'],
 				trim: true,
-				minLength: [2, 'First name must be at least 2 characters long'],
-				maxLength: [20, 'First name cannot exceed 20 characters'],
+				minLength: [
+					MIN_FIRST_LAST_NAME_LENGTH,
+					`First name must be at least ${MIN_FIRST_LAST_NAME_LENGTH} characters long`,
+				],
+				maxLength: [
+					MAX_FIRST_LAST_NAME_LENGTH,
+					`First name cannot exceed ${MAX_FIRST_LAST_NAME_LENGTH} characters`,
+				],
 				validate: {
 					validator: validator.isAlpha,
 					message: 'Name must only contain letters',
@@ -45,8 +60,14 @@ const userSchema = new mongoose.Schema(
 				type: String,
 				required: [true, 'Last name is required'],
 				trim: true,
-				minLength: [2, 'Last name must be at least 2 characters long'],
-				maxLength: [20, 'Last name cannot exceed 20 characters'],
+				minLength: [
+					MIN_FIRST_LAST_NAME_LENGTH,
+					`Last name must be at least ${MIN_FIRST_LAST_NAME_LENGTH} characters long`,
+				],
+				maxLength: [
+					MAX_FIRST_LAST_NAME_LENGTH,
+					`Last name cannot exceed ${MAX_FIRST_LAST_NAME_LENGTH} characters`,
+				],
 				validate: {
 					validator: validator.isAlpha,
 					message: 'Name must only contain letters',
@@ -61,7 +82,10 @@ const userSchema = new mongoose.Schema(
 			},
 			bio: {
 				type: String,
-				maxLength: [150, 'Bio cannot exceed 150 characters'],
+				maxLength: [
+					MAX_CONTENT_LENGTH,
+					`Bio cannot exceed ${MAX_CONTENT_LENGTH} characters`,
+				],
 				default: '',
 			},
 			address: {

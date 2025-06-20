@@ -3,12 +3,16 @@ const User = require('../models/User');
 const Group = require('../models/Group');
 const { handleErrors } = require('../middleware/errorHandler');
 const { createError } = require('../utils/errorUtils');
+const {
+	uploadToCloudinary,
+	deleteFromCloudinary,
+} = require('../services/mediaService');
 
 // TODO: Timezone related places: searching objects (posts, comments...) based on dates.
 
 const createPost = async (req, res) => {
 	try {
-		const { content, visibility, tags, groupId, media } = req.body;
+		const { content, visibility, tags, groupId } = req.body;
 		const authorId = req.user.userId;
 
 		// If posting to a group, verify the user is a member of that group
@@ -33,14 +37,45 @@ const createPost = async (req, res) => {
 			}
 		}
 
+		let mediaDataArray = [];
+		if (req.files && req.files.length > 0) {
+			const uploadFiles = req.files.map((file) =>
+				uploadToCloudinary(file.buffer, {
+					folder: `linkspace/posts/${authorId}`,
+				}),
+			);
+
+			const uploadResults = await Promise.all(uploadFiles);
+
+			mediaDataArray = uploadResults.map((media) => ({
+				type: media.resourceType === 'video' ? 'video' : 'image',
+				url: media.url,
+				publicId: media.publicId,
+				format: media.format,
+				width: media.width,
+				height: media.height,
+				bytes: media.bytes,
+				// thumbnail:
+			}));
+		}
+
 		const post = new Post({
 			content,
 			author: authorId,
 			group: groupId || null,
 			visibility: groupId ? 'group' : visibility || 'public',
 			tags: tags || [],
-			media: media || [],
+			media: mediaDataArray,
 		});
+
+		/* const post = new Post({
+			content,
+			author: authorId,
+			group: groupId || null,
+			visibility: groupId ? 'group' : visibility || 'public',
+			tags: tags || [],
+			media: media || [],
+		}); */
 
 		await post.save();
 		await post.populate(
