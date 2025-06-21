@@ -4,21 +4,23 @@ const Group = require('../models/Group');
 const { handleErrors } = require('../middleware/errorHandler');
 const { createError } = require('../utils/errorUtils');
 const {
-	uploadToCloudinary,
-	deleteFromCloudinary,
+	deleteMediaFiles,
+	getTransformationOptions,
+	processMultipleFiles,
 } = require('../services/mediaService');
 
 // TODO: Timezone related places: searching objects (posts, comments...) based on dates.
 
 const createPost = async (req, res) => {
+	let uploadedMedia = [];
+
 	try {
 		const { content, visibility, tags, groupId } = req.body;
 		const authorId = req.user.userId;
 
-		// If posting to a group, verify the user is a member of that group
+		// Validate group membership if posting to a group
 		if (groupId) {
 			const group = await Group.findById(groupId);
-
 			if (!group) {
 				throw createError('Group not found', 404);
 			}
@@ -32,50 +34,33 @@ const createPost = async (req, res) => {
 			if (!isMember) {
 				throw createError(
 					'You must be an approved member to post in this group',
-					404,
+					403,
 				);
 			}
 		}
 
-		let mediaDataArray = [];
+		// Handle file uploads if present
 		if (req.files && req.files.length > 0) {
-			const uploadFiles = req.files.map((file) =>
-				uploadToCloudinary(file.buffer, {
-					folder: `linkspace/posts/${authorId}`,
-				}),
+			const uploadOptions = {
+				folder: `linkspace/posts/${authorId}`,
+				transformation: getTransformationOptions('post'),
+			};
+
+			uploadedMedia = await processMultipleFiles(
+				req.files,
+				uploadOptions,
 			);
-
-			const uploadResults = await Promise.all(uploadFiles);
-
-			mediaDataArray = uploadResults.map((media) => ({
-				type: media.resourceType === 'video' ? 'video' : 'image',
-				url: media.url,
-				publicId: media.publicId,
-				format: media.format,
-				width: media.width,
-				height: media.height,
-				bytes: media.bytes,
-				// thumbnail:
-			}));
 		}
 
+		// Create the post
 		const post = new Post({
 			content,
 			author: authorId,
 			group: groupId || null,
 			visibility: groupId ? 'group' : visibility || 'public',
 			tags: tags || [],
-			media: mediaDataArray,
+			media: uploadedMedia,
 		});
-
-		/* const post = new Post({
-			content,
-			author: authorId,
-			group: groupId || null,
-			visibility: groupId ? 'group' : visibility || 'public',
-			tags: tags || [],
-			media: media || [],
-		}); */
 
 		await post.save();
 		await post.populate(
@@ -83,10 +68,12 @@ const createPost = async (req, res) => {
 			'profile.firstName profile.lastName profile.avatar',
 		);
 
+		// Update user stats
 		await User.findByIdAndUpdate(authorId, {
 			$inc: { 'stats.totalPosts': 1 },
 		});
 
+		// Update group stats if applicable
 		if (groupId) {
 			const currentMonth = new Date().toLocaleString('en-US', {
 				month: 'long',
@@ -121,6 +108,11 @@ const createPost = async (req, res) => {
 			post,
 		});
 	} catch (error) {
+		// Clean up uploaded files if post creation fails
+		if (uploadedMedia.length > 0) {
+			await deleteMediaFiles(uploadedMedia);
+		}
+
 		const errors = handleErrors(error);
 		res.status(errors.status).json({ errors });
 	}
@@ -130,16 +122,7 @@ const updatePost = async (req, res) => {
 	try {
 		const { content, visibility, tags, media } = req.body;
 		const postId = req.params.id;
-		// const userId = req.user.userId;
 		const post = await Post.findById(postId);
-
-		/* if (!post) {
-			throw createError('Post not found', 404);
-		}
-
-		if (post.author.toString() !== userId) {
-			throw createError('You can only update your own posts', 403);
-		} */
 
 		if (content !== undefined) {
 			post.content = content;
@@ -174,21 +157,16 @@ const deletePost = async (req, res) => {
 	try {
 		const postId = req.params.id;
 		const userId = req.user.userId;
-		// const post = await Post.findById(postId);
 
 		let post = req.post;
-
 		if (post.group) {
 			post = await Post.findById(postId).populate('group');
 		}
 
-		/* if (!post) {
-			throw createError('Post not found', 404);
+		// Delete associated media files from Cloudinary
+		if (post.media && post.media.length > 0) {
+			await deleteMediaFiles(post.media);
 		}
-
-		if (post.author.toString() !== userId) {
-			throw createError('You can only delete your own posts', 403);
-		} */
 
 		await Post.findByIdAndDelete(postId);
 
@@ -258,10 +236,6 @@ const searchPosts = async (req, res) => {
 			const tagsArray = Array.isArray(tags) ? tags : tags.split(',');
 			query.tags = { $in: tagsArray };
 		}
-
-		/* if (visibility) {
-			query.visibility = visibility;
-		} */
 
 		if (groupId) {
 			query.groupId = groupId;
