@@ -1,13 +1,14 @@
 const multer = require('multer');
 const { createError } = require('../utils/errorUtils');
+const { MAX_FILE_SIZE, MAX_FILE_UPLOADS } = require('../utils/constants');
 
 const storage = multer.memoryStorage();
 
 const upload = multer({
 	storage: storage,
 	limits: {
-		fileSize: 10 * 1024 * 1024, // 10MB limit
-		files: 5, // 5 files per request
+		fileSize: MAX_FILE_SIZE, // 10MB limit
+		files: MAX_FILE_UPLOADS, // 5 files per request
 	},
 	fileFilter: (req, file, cb) => {
 		const allowedFileTypes = /jpeg|jpg|png|mp4/;
@@ -31,5 +32,5 @@ const upload = multer({
 
 module.exports = {
 	uploadSingle: upload.single('file'),
-	uploadMultiple: upload.array('files', 5),
+	uploadMultiple: upload.array('files', MAX_FILE_UPLOADS),
 };
