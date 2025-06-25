@@ -34,7 +34,7 @@ export default function App() {
 	return (
 		<div>
 			<div>
-				<h1>Login to LinkSpace</h1>
+				<h1 className='text-red-500'>Login to LinkSpace</h1>
 				<div>
 					<div>
 						<label>Email</label>
