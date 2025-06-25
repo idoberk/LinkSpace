@@ -10,7 +10,7 @@ export default function App() {
 		setLoading(true);
 
 		try {
-			const res = await api.post('/auth/login', {
+			const res = await api.post('/account/login', {
 				email,
 				password,
 			});
