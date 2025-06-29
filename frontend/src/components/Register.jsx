@@ -1,5 +1,10 @@
-import { useState, useActionState } from 'react';
+import { useActionState } from 'react';
+import Input from './Input';
+import PasswordStrengthIndicator from './PasswordStrengthIndicator';
+import { MIN_PASS_LENGTH } from '../utils/constants';
 import api from '../lib/axios';
+import { useInput } from '../hooks/useInput';
+import { hasMinLength, isEmail } from '../utils/validation';
 
 const initialFormState = {
 	errors: null,
@@ -11,8 +16,22 @@ const initialFormState = {
 	},
 };
 
-export default function SignUp({ onSwitchToSignIn }) {
-	async function submitSignUpAction(prevFormState, formData) {
+const Register = ({ onSwitchToLogin }) => {
+	const {
+		value: emailValue,
+		handleInputChange: handleEmailChange,
+		handleInputBlur: handleEmailBlur,
+		hasError: emailHasError,
+	} = useInput('', (value) => isEmail(value));
+
+	const {
+		value: passwordValue,
+		handleInputChange: handlePasswordChange,
+		handleInputBlur: handlePasswordBlur,
+		hasError: passwordHasError,
+	} = useInput('', (value) => hasMinLength(value, MIN_PASS_LENGTH));
+
+	async function submitRegisterAction(prevFormState, formData) {
 		const email = formData.get('email');
 		const password = formData.get('password');
 		const firstName = formData.get('firstName');
@@ -45,42 +64,9 @@ export default function SignUp({ onSwitchToSignIn }) {
 	}
 
 	const [formState, formAction, isPending] = useActionState(
-		submitSignUpAction,
+		submitRegisterAction,
 		initialFormState,
 	);
-
-	/* const [formData, setFormData] = useState({
-		email: '',
-		password: '',
-		firstName: '',
-		lastName: '',
-	});
-	const [loading, setLoading] = useState(false);
-
-	const handleInputChange = (e) => {
-		const { name, value } = e.target;
-		setFormData((prev) => ({
-			...prev,
-			[name]: value,
-		}));
-	};
-
-	const handleFormSubmit = async () => {
-		setLoading(true);
-
-		try {
-			const response = await api.post('/account/register', formData);
-			console.log('Registration successful:', response.data);
-			// onSignIn(response.data);
-		} catch (error) {
-			console.log(
-				'Registration failed:',
-				error.response?.data?.errors || error.message,
-			);
-		} finally {
-			setLoading(false);
-		}
-	}; */
 
 	return (
 		<div className='p-8'>
@@ -122,8 +108,8 @@ export default function SignUp({ onSwitchToSignIn }) {
 						/>
 					</div>
 				</div>
-				<div className='relative group'>
-					<label
+
+				{/* <label
 						htmlFor='email'
 						className='block text-sm font-medium text-gray-500 mb-1 group-focus-within:text-blue-600'>
 						Email
@@ -137,10 +123,24 @@ export default function SignUp({ onSwitchToSignIn }) {
 						autoComplete='off'
 						className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 border-gray-500`}
 						placeholder='john.doe@example.com'
-					/>
-				</div>
-				<div className='relative group'>
-					<label
+					/> */}
+				<Input
+					label='Email'
+					labelStyle={
+						'block text-sm font-medium text-gray-500 mb-1 group-focus-within:text-blue-600'
+					}
+					id='email'
+					type='email'
+					name='email'
+					inputStyle={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 border-gray-500`}
+					error={emailHasError && 'Please enter a valid email'}
+					onBlur={handleEmailBlur}
+					onChange={handleEmailChange}
+					value={emailValue}
+					placeholder='john.doe@example.com'
+				/>
+
+				{/* <label
 						htmlFor='password'
 						className='block text-sm font-medium text-gray-500 mb-1 group-focus-within:text-blue-600'>
 						Password
@@ -152,24 +152,45 @@ export default function SignUp({ onSwitchToSignIn }) {
 						defaultValue={formState.enteredValues?.password}
 						//onChange={handleInputChange}
 						className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 border-gray-500`}
-						placeholder='At least 6 characters'
-					/>
-				</div>
+						placeholder=`At least ${MIN_PASS_LENGTH} characters`
+					/> */}
+				<Input
+					label='Password'
+					labelStyle={
+						'block text-sm font-medium text-gray-500 mb-1 group-focus-within:text-blue-600'
+					}
+					id='password'
+					type='password'
+					name='password'
+					inputStyle={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 border-gray-500`}
+					error={
+						passwordHasError &&
+						`Password must contain at least ${MIN_PASS_LENGTH} characters`
+					}
+					onBlur={handlePasswordBlur}
+					onChange={handlePasswordChange}
+					value={passwordValue}
+					placeholder={`At least ${MIN_PASS_LENGTH} characters`}
+				/>
+				<PasswordStrengthIndicator password={passwordValue} />
+
 				<button
 					type='submit'
 					//onClick={handleFormSubmit}
 					className='w-full mb-4 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
 					disabled={isPending}>
-					{isPending ? 'Creating account...' : 'Sign Up'}
+					{isPending ? 'Creating account...' : 'Register'}
 				</button>
 			</form>
 			<div className='text-center'>
 				<button
-					onClick={onSwitchToSignIn}
+					onClick={onSwitchToLogin}
 					className='text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200'>
-					Already have an account? Sign in
+					Already have an account? Login
 				</button>
 			</div>
 		</div>
 	);
-}
+};
+
+export default Register;
