@@ -1,4 +1,5 @@
 import { MIN_PASS_LENGTH } from './constants';
+import { convertToTitleCase } from './stringManipulation';
 
 export const calcPasswordStrength = (password) => {
 	let strength = 0;
