@@ -4,7 +4,9 @@ import PasswordStrengthIndicator from './PasswordStrengthIndicator';
 import { MIN_PASS_LENGTH } from '../utils/constants';
 import api from '../lib/axios';
 import { useInput } from '../hooks/useInput';
-import { hasMinLength, isEmail } from '../utils/validation';
+import { hasMinLength, isEmail, notEmpty } from '../utils/validation';
+import { useNavigate } from 'react-router-dom';
+import Button from './Button';
 
 const initialFormState = {
 	errors: null,
@@ -16,7 +18,21 @@ const initialFormState = {
 	},
 };
 
-const Register = ({ onSwitchToLogin }) => {
+// const Register = ({ onSwitchToLogin }) => {
+const Register = () => {
+	const {
+		value: firstNameValue,
+		handleInputChange: handleFirstNameChange,
+		handleInputBlur: handleFirstNameBlur,
+		hasError: firstNameHasError,
+	} = useInput('', notEmpty);
+
+	const {
+		value: lastNameValue,
+		handleInputChange: handleLastNameChange,
+		handleInputBlur: handleLastNameBlur,
+		hasError: lastNameHasError,
+	} = useInput('', notEmpty);
 	const {
 		value: emailValue,
 		handleInputChange: handleEmailChange,
@@ -31,11 +47,21 @@ const Register = ({ onSwitchToLogin }) => {
 		hasError: passwordHasError,
 	} = useInput('', (value) => hasMinLength(value, MIN_PASS_LENGTH));
 
+	const isFormValid = notEmpty(emailValue) && notEmpty(passwordValue);
+
+	const navigate = useNavigate();
+
 	async function submitRegisterAction(prevFormState, formData) {
 		const email = formData.get('email');
 		const password = formData.get('password');
 		const firstName = formData.get('firstName');
 		const lastName = formData.get('lastName');
+		// const email = emailValue;
+		// const password = passwordValue;
+		// const firstName = firstNameValue;
+		// const lastName = lastNameValue;
+		// const firstName = formData.get('firstName');
+		// const lastName = formData.get('lastName');
 
 		let errors = [];
 
@@ -59,6 +85,7 @@ const Register = ({ onSwitchToLogin }) => {
 		});
 
 		console.log('Registration successful:', response.data);
+		navigate('/home'); //maybe change to home
 
 		return { errors: null };
 	}
@@ -174,23 +201,27 @@ const Register = ({ onSwitchToLogin }) => {
 				/>
 				<PasswordStrengthIndicator password={passwordValue} />
 
-				<button
+				{/* <button
 					type='submit'
 					//onClick={handleFormSubmit}
-					className='w-full mb-4 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
+					className='w-full mb-4 bg-indigo-500 text-white py-2 px-4 rounded-lg hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
 					disabled={isPending}>
 					{isPending ? 'Creating account...' : 'Register'}
-				</button>
+				</button> */}
+				<Button type='submit' disabled={isPending || !isFormValid}>
+					{isPending ? 'Creating account...' : 'Register'}
+				</Button>
 			</form>
 			<div className='text-center'>
-				<button
+				{/* <button
 					onClick={onSwitchToLogin}
 					className='text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200'>
 					Already have an account? Login
-				</button>
+				</button> */}
+				<Button onClick={() => navigate('/login')}>
+					Already have an account? Login
+				</Button>
 			</div>
 		</div>
 	);
 };
-
-export default Register;
