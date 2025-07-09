@@ -1,27 +1,17 @@
 import { useState } from 'react';
 
-import Input from './Input';
+import Input from '../components/Input';
 import api from '../lib/axios';
 import { useInput } from '../hooks/useInput';
 import { useNavigate } from 'react-router-dom';
-import Button from './Button';
+import Button from '../components/Button';
 import {
 	MAX_FIRST_LAST_NAME_LENGTH,
 	MIN_FIRST_LAST_NAME_LENGTH,
 	MIN_PASS_LENGTH,
 } from '../utils/constants';
 import { hasMinLength, isEmail, isValidName } from '../utils/validation';
-import PasswordStrengthIndicator from './PasswordStrengthIndicator';
-
-const initialFormState = {
-	errors: null,
-	enteredValues: {
-		email: '',
-		password: '',
-		firstName: '',
-		lastName: '',
-	},
-};
+import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
 
 // const Register = ({ onSwitchToLogin }) => {
 const Register = () => {
@@ -116,9 +106,7 @@ const Register = () => {
 				lastName: lastNameValue,
 			});
 			console.log('Registration successful:', response.data);
-			navigate('/home');
-			//onSwitchToLogin();
-			// onSignIn(response.data);
+			navigate('/login');
 		} catch (error) {
 			console.log(
 				'Registration failed:',

@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Input from './Input';
-import Button from './Button';
+import Input from '../components/Input';
+import Button from '../components/Button';
 import api from '../lib/axios';
 import { useInput } from '../hooks/useInput';
-import { PasswordInput } from './PasswordInput';
+import { PasswordInput } from '../components/PasswordInput';
 import { MIN_PASS_LENGTH } from '../utils/constants';
 import { hasMinLength, isEmail } from '../utils/validation';
 
@@ -41,9 +41,12 @@ const Login = () => {
 				email: emailValue,
 				password: passwordValue,
 			});
-			console.log('Login successful:', response.data.user);
+			console.log(
+				'Login successful:',
+				response.data.user,
+				response.data.token,
+			);
 			navigate('/home');
-			// onSignIn(response.data);
 		} catch (error) {
 			console.log(
 				'Login failed:',
