@@ -246,7 +246,7 @@ const searchPosts = async (req, res) => {
 		} else {
 			const user = await User.findById(userId);
 
-			const userGroups = user.groups;
+			/* const userGroups = user.groups; */
 
 			// If a specific visibility is requested, only include it if the user has permission
 			if (visibility) {

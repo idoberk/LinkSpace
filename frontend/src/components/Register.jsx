@@ -23,7 +23,6 @@ const initialFormState = {
 	},
 };
 
-
 // const Register = ({ onSwitchToLogin }) => {
 const Register = () => {
 	const navigate = useNavigate();
@@ -108,7 +107,6 @@ const Register = () => {
 
 		setLoading(true);
 		setApiErrors({});
-
 
 		try {
 			const response = await api.post('/account/register', {
@@ -231,23 +229,27 @@ const Register = () => {
 				/>
 				<PasswordStrengthIndicator password={passwordValue} />
 
-
 				{apiErrors.general && (
 					<p className='text-sm text-red-600 text-center'>
 						{apiErrors.general}
 					</p>
 				)}
-				
-				<Button type='submit' disabled={isPending}>
-					{isPending ? 'Creating account...' : 'Register'}
+
+				<Button type='submit' disabled={loading}>
+					{loading ? 'Creating account...' : 'Register'}
 				</Button>
-				
 			</form>
 			<div className='text-center'>
-				<Button onClick={() => navigate('/login')}>
+				<Button
+					onClick={() => navigate('/login')}
+					className={
+						'text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200'
+					}>
 					Already have an account? Login
 				</Button>
 			</div>
 		</div>
 	);
 };
+
+export default Register;

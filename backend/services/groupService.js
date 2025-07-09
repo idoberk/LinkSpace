@@ -9,7 +9,7 @@ const shouldAllowOwnershipTransfer = (group) => {
 
 	const minimumMembers =
 		group.settings.ownershipTransfer.minimumMembersForTransfer || 2;
-	const approvedMembersCount = group.memers.filter(
+	const approvedMembersCount = group.members.filter(
 		(member) =>
 			member.status === 'approved' &&
 			member.user.toString() !== group.creator.toString(),

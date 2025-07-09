@@ -1,20 +1,13 @@
 import { useState } from 'react';
-
-import Input from './Input';
-import api from '../lib/axios';
-import { isEmail, hasMinLength } from '../utils/validation';
-import { MIN_PASS_LENGTH } from '../utils/constants';
-import { PasswordInput } from './PasswordInput';
-import  Button  from './Button';
 import { useNavigate } from 'react-router-dom';
+import Input from './Input';
+import Button from './Button';
+import api from '../lib/axios';
 import { useInput } from '../hooks/useInput';
+import { PasswordInput } from './PasswordInput';
+import { MIN_PASS_LENGTH } from '../utils/constants';
+import { hasMinLength, isEmail } from '../utils/validation';
 
-
-
-
-
-
-// const Login = ({ onSwitchToRegister }) => {
 const Login = () => {
 	const navigate = useNavigate();
 
@@ -96,11 +89,14 @@ const Login = () => {
 				/>
 				<Button type='submit' disabled={loading}>
 					{loading ? 'Logging in...' : 'Login'}
-					
 				</Button>
 			</form>
-			<div className='mt-6 text-center'>
-				<Button onClick={() => navigate('/register')}>
+			<div className='text-center'>
+				<Button
+					onClick={() => navigate('/register')}
+					className={
+						'text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200'
+					}>
 					Create a new account
 				</Button>
 			</div>
