@@ -15,6 +15,7 @@ app.get('/api/test', (req, res) => {
 app.use('/api/account', require('./routes/accountRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/posts', require('./routes/postRoutes'));
+app.use('/api/groups', require('./routes/groupRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 
 app.use((err, req, res, next) => {

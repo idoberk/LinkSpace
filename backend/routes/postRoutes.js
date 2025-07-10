@@ -13,7 +13,7 @@ const { handleUploadErrors } = require('../middleware/errorHandler');
 router.post(
 	'/',
 	authenticate,
-	uploadMultiple,
+	uploadMultiple('media'),
 	handleUploadErrors,
 	postController.createPost,
 );

@@ -6,25 +6,51 @@ const groupSchema = new mongoose.Schema(
 		name: {
 			type: String,
 			required: true,
+			unique: true,
 			trim: true,
 		},
 		description: {
 			type: String,
 			maxLength: MAX_CONTENT_LENGTH,
 		},
-		// category?
+		category: {
+			type: String,
+			enum: [
+				'technology',
+				'sports',
+				'music',
+				'gaming',
+				'education',
+				'business',
+				'art',
+				'health',
+				'food',
+				'travel',
+				'photography',
+				'books',
+				'movies',
+				'politics',
+				'science',
+				'other',
+			],
+			required: true,
+			default: 'other',
+		},
 		privacy: {
 			type: String,
 			enum: ['public', 'private'],
 			default: 'public',
 		},
-		coverImage: String,
+		coverImage: {
+			url: { type: String },
+			publicId: { type: String },
+		},
 		creator: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: 'User',
 			required: true,
 		},
-		managers: [
+		admins: [
 			{
 				type: mongoose.Schema.Types.ObjectId,
 				ref: 'User',
@@ -47,8 +73,11 @@ const groupSchema = new mongoose.Schema(
 				},
 			},
 		],
-		rules: [String],
 		settings: {
+			joiningRequiresApproval: {
+				type: Boolean,
+				default: true,
+			},
 			ownershipTransfer: {
 				enabled: {
 					type: Boolean,
@@ -98,6 +127,6 @@ groupSchema.index({ name: 'text', description: 'text' });
 groupSchema.index({ category: 1, privacy: 1 });
 groupSchema.index({ creator: 1 });
 groupSchema.index({ 'members.user': 1 });
-groupSchema.index({ managers: 1 });
+groupSchema.index({ admins: 1 });
 
 module.exports = mongoose.model('Group', groupSchema);

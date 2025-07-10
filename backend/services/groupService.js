@@ -1,6 +1,8 @@
 const Group = require('../models/Group');
 const Comment = require('../models/Comment');
 const Post = require('../models/Post');
+const { createError } = require('../utils/errorUtils');
+const { deleteMediaFiles } = require('./mediaService');
 
 const shouldAllowOwnershipTransfer = (group) => {
 	if (!group.settings?.ownershipTransfer?.enabled) {
@@ -35,16 +37,16 @@ const findNewGroupOwner = async (group, currentOwnerId, session) => {
 	if (!shouldAllowOwnershipTransfer(group) || !isGroupActiveEnough(group)) {
 		return null;
 	}
-	// Try to find an active manager
-	const activeManagers = group.managers.filter(
-		(manager) =>
-			manager._id.toString() !== currentOwnerId.toString() &&
-			manager.status?.isOnline !== false,
+	// Try to find an active admin
+	const activeAdmins = group.admins.filter(
+		(admin) =>
+			admin._id.toString() !== currentOwnerId.toString() &&
+			admin.status?.isOnline !== false,
 	);
 
-	if (activeManagers.length > 0) {
-		// Return the most recent active manager
-		return activeManagers.sort(
+	if (activeAdmins.length > 0) {
+		// Return the most recent active admin
+		return activeAdmins.sort(
 			(a, b) =>
 				new Date(b.status?.lastSeen || 0) -
 				new Date(a.status?.lastSeen || 0),
@@ -61,11 +63,11 @@ const transferGroupOwnership = async (groupId, newOwner, session) => {
 		{
 			creator: newOwner._id,
 			$pull: {
-				managers: newOwner._id,
+				admins: newOwner._id,
 				'members.user': newOwner._id,
 			},
 			$push: {
-				managers: newOwner._id,
+				admins: newOwner._id,
 			},
 		},
 		{ session },
@@ -77,24 +79,58 @@ const transferGroupOwnership = async (groupId, newOwner, session) => {
 	);
 };
 
+// TODO: Maybe when deleting groups / posts / etc... delete the folders from cloudinary too and not just the files.
+
 const deleteGroupAndContent = async (groupId, session) => {
+	const group = await Group.findById(groupId).session(session);
+
+	if (!group) {
+		throw createError('Group not found', 404);
+	}
+	if (group.coverImage) {
+		try {
+			await deleteMediaFiles([group.coverImage]);
+			console.log(`Deleted cover image for group ${groupId}`);
+		} catch (error) {
+			console.log(
+				`Error deleting cover image for group ${groupId}:`,
+				error,
+			);
+		}
+	}
+
+	const groupPosts = await Post.find({ group: groupId }, 'media', {
+		session,
+	});
+
+	for (const post of groupPosts) {
+		if (post.media && post.media.length > 0) {
+			try {
+				await deleteMediaFiles(post.media);
+				console.log(
+					`Deleted media for post ${post._id} in group ${groupId}`,
+				);
+			} catch (error) {
+				console.error(
+					`Error deleting media for post ${post._id}:`,
+					error,
+				);
+			}
+		}
+	}
+
 	await Post.deleteMany({ group: groupId }, { session });
 
-	const groupPosts = await Post.find({ group: groupId }, '_id', { session });
 	const postIds = groupPosts.map((post) => post._id);
 
 	await Comment.deleteMany({ post: { $in: postIds } }, { session });
 	await Group.findByIdAndDelete(groupId, { session });
-
-	console.log(
-		`Group ${groupId} deleted due to no suitable ownership transfer`,
-	);
 };
 
 const handleUserGroupDeletion = async (userId, session) => {
 	// Handle groups created by the user
 	const groupsCreatedByUser = await Group.find({ creator: userId })
-		.populate('managers', 'status lastSeen')
+		.populate('admins', 'status lastSeen')
 		.populate('members.user', 'status lastSeen')
 		.session(session);
 
@@ -107,20 +143,23 @@ const handleUserGroupDeletion = async (userId, session) => {
 		} else {
 			// Couldn't find a suitable replacement, delete the group instead
 			await deleteGroupAndContent(group._id, session);
+			console.log(
+				`Group ${group._id} deleted due to no suitable ownership transfer`,
+			);
 		}
 	}
 
 	// Remove user from all the groups they're a member of
 	await Group.updateMany(
 		{ 'members.user': userId },
-		{ $pull: { 'members.user': userId } },
+		{ $pull: { members: { user: userId } } },
 		{ session },
 	);
 
-	// Remove user from all the groups they're a manager of
+	// Remove user from all the groups they're an admin of
 	await Group.updateMany(
-		{ managers: userId },
-		{ $pull: { managers: userId } },
+		{ admins: userId },
+		{ $pull: { admins: userId } },
 		{ session },
 	);
 };

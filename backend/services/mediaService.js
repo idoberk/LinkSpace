@@ -113,9 +113,14 @@ const processMultipleFiles = async (files, options = {}) => {
 const deleteMediaFiles = async (mediaArray) => {
 	if (!mediaArray || mediaArray.length === 0) return;
 
-	const deleteFiles = mediaArray.map((media) =>
-		deleteFromCloudinary(media.publicId, media.type),
-	);
+	const deleteFiles = mediaArray.map((media) => {
+		const publicId = media.publicId;
+		const resourceType = media.type || 'image';
+
+		if (publicId) {
+			return deleteFromCloudinary(publicId, resourceType);
+		}
+	});
 
 	try {
 		await Promise.all(deleteFiles);

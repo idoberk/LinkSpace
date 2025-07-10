@@ -3,7 +3,6 @@ const { createError } = require('../utils/errorUtils');
 const { MAX_FILE_SIZE, MAX_FILE_UPLOADS } = require('../utils/constants');
 
 const storage = multer.memoryStorage();
-
 const upload = multer({
 	storage: storage,
 	limits: {
@@ -31,6 +30,12 @@ const upload = multer({
 });
 
 module.exports = {
+	uploadSingle: (fieldName = 'file') => upload.single(fieldName),
+	uploadMultiple: (fieldName = 'files', maxCount = MAX_FILE_UPLOADS) =>
+		upload.array(fieldName, maxCount),
+};
+
+/* module.exports = {
 	uploadSingle: upload.single('file'),
 	uploadMultiple: upload.array('files', MAX_FILE_UPLOADS),
-};
+}; */
