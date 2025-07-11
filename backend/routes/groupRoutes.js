@@ -5,6 +5,7 @@ const {
 	isGroupMember,
 	isGroupAdmin,
 	isGroupCreator,
+	canViewGroup,
 } = require('../middleware/groupMiddleware');
 const { authenticate, optionalAuth } = require('../middleware/authMiddleware');
 const { uploadSingle } = require('../middleware/uploadMiddleware');
@@ -12,7 +13,12 @@ const { handleUploadErrors } = require('../middleware/errorHandler');
 
 router.get('/', groupController.searchGroups);
 router.get('/:id', groupController.getGroupById);
-router.get('/:id/stats', groupController.getGroupStats);
+router.get(
+	'/:id/stats',
+	authenticate,
+	isGroupAdmin,
+	groupController.getGroupStats,
+);
 
 router.post(
 	'/',
@@ -46,25 +52,20 @@ router.post(
 	isGroupMember,
 	groupController.leaveGroup,
 );
+
+// Member management
 router.get(
-	'/:id/pending-requests',
+	'/:id/members/pending-requests',
 	authenticate,
 	isGroupAdmin,
-	groupController.getPendingRequests,
+	groupController.getPendingMembers,
 );
 
 router.post(
-	'/:id/approve-request',
+	'/:id/members/:userId/request',
 	authenticate,
 	isGroupAdmin,
-	groupController.approveJoinRequest,
-);
-
-router.post(
-	'/:id/reject-request',
-	authenticate,
-	isGroupAdmin,
-	groupController.rejectJoinRequest,
+	groupController.handleJoinRequest,
 );
 
 router.delete(
@@ -74,6 +75,24 @@ router.delete(
 	groupController.removeGroupMember,
 );
 
+// Ban management (Admins only)
+router.post('/:id/ban', authenticate, isGroupAdmin, groupController.banUser);
+router.get(
+	'/:id/bans',
+	authenticate,
+	isGroupAdmin,
+	groupController.getBannedUsers,
+);
+
+// Membership History
+router.get(
+	'/:id/history',
+	authenticate,
+	isGroupAdmin,
+	groupController.getMembershipHistory,
+);
+
+// Admin management
 router.post(
 	'/:id/admins/:userId',
 	authenticate,
@@ -87,6 +106,7 @@ router.delete(
 	groupController.demoteGroupAdmin,
 );
 
+// Group post management (Admins only)
 router.delete(
 	'/:id/posts/:postId',
 	authenticate,

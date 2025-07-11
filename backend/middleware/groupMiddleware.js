@@ -79,8 +79,30 @@ const isGroupCreator = async (req, res, next) => {
 	}
 };
 
+/* const canViewGroup = async (req, res, next) => {
+	try {
+		const groupId = req.params.id;
+		const userId = req.user?.userId;
+		const group = await Group.findById(groupId)
+
+		if (!group) {
+			throw createError('Group not found', 404);
+		}
+
+		if (group.privacy === 'public') {
+			req.group = group;
+			return next();
+		}
+
+		if (!userId) {
+			throw createError('')
+		}
+	}
+}; */
+
 module.exports = {
 	isGroupMember,
 	isGroupAdmin,
 	isGroupCreator,
+	//canViewGroup,
 };

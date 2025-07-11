@@ -3,6 +3,7 @@ const Comment = require('../models/Comment');
 const Post = require('../models/Post');
 const { createError } = require('../utils/errorUtils');
 const { deleteMediaFiles } = require('./mediaService');
+const { PAST_30_DAYS } = require('../utils/constants');
 
 const shouldAllowOwnershipTransfer = (group) => {
 	if (!group.settings?.ownershipTransfer?.enabled) {
@@ -27,7 +28,7 @@ const isGroupActiveEnough = (group) => {
 		return false;
 	}
 
-	const activePastMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+	const activePastMonth = new Date(Date.now() - PAST_30_DAYS);
 
 	return new Date(lastActivity) > activePastMonth;
 };
