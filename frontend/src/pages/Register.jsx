@@ -23,6 +23,8 @@ import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
 // 	},
 // };
 
+// TODO: add a generic profile picture to the created user
+
 // const Register = ({ onSwitchToLogin }) => {
 const Register = () => {
 	const navigate = useNavigate();

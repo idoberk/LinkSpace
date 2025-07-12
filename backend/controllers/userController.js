@@ -111,7 +111,7 @@ const searchUser = async (req, res) => {
 
 		const users = await User.find(query)
 			.select(
-				'profile.firstName profile.lastName profile.avatar profile.address settings.privacy.locationInfo createdAt',
+				'profile.firstName profile.lastName profile.avatar profile.coverImage profile.address settings.privacy.locationInfo createdAt',
 			)
 			.sort({ createdAt: -1 })
 			.limit(parseInt(limit))
@@ -130,6 +130,7 @@ const searchUser = async (req, res) => {
 					firstName: user.profile.firstName,
 					lastName: user.profile.lastName,
 					avatar: user.profile.avatar,
+					coverImage: user.profile.coverImage,
 				},
 				createdAt: user.createdAt,
 			};

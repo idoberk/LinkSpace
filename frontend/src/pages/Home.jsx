@@ -1,12 +1,28 @@
-import ProfilePicture from '../components/ProfilePicture';
 import TopBar from '../components/TopBar';
+import SideBar from '../components/SideBar';
+import Feed from '../components/Feed';
+import { useState } from 'react';
 
 // TODO: change the profile picture to the user's avatar picture from backend
 const Home = () => {
+	const [user, setUser] = useState(() => {
+		const storedUser = localStorage.getItem('user');
+		return storedUser ? JSON.parse(storedUser) : null;
+	});
+
+	console.log(user);
+
 	return (
-		<div className='bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen'>
-			<TopBar />
-			<ProfilePicture picture='https://fastly.picsum.photos/id/58/1280/853.jpg?hmac=YO3QnOm9TpyM5DqsJjoM4CHg8oIq4cMWLpd9ALoP908' />
+		<div className='bg-white min-h-screen'>
+			<TopBar user={user} />
+			<div className='flex flex-row h-screen mt-16'>
+				<div className='w-1/5 h-screen'>
+					<SideBar className='h-screen ' user={user} />
+				</div>
+				<div className='w-3/5 h-screen'>
+					<Feed className='h-screen ' />
+				</div>
+			</div>
 		</div>
 	);
 };

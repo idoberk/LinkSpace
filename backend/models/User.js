@@ -95,6 +95,10 @@ const userSchema = new mongoose.Schema(
 				type: String,
 				default: '',
 			},
+			coverImage: {
+				type: String,
+				default: '',
+			},
 		},
 		friends: [
 			{
@@ -249,6 +253,7 @@ userSchema.methods.getPublicProfile = function (viewerId) {
 			firstName: this.profile.firstName,
 			lastName: this.profile.lastName,
 			avatar: this.profile.avatar,
+			coverImage: this.profile.coverImage,
 		},
 	};
 

@@ -236,6 +236,9 @@ const updateUser = async (req, res) => {
 			if (profile.avatar !== undefined) {
 				user.profile.avatar = profile.avatar;
 			}
+			if (profile.coverImage !== undefined) {
+				user.profile.coverImage = profile.coverImage;
+			}
 		}
 
 		if (settings) {
