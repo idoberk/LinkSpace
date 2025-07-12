@@ -29,6 +29,7 @@ const canViewPost = async (req, res, next) => {
 	try {
 		const postId = req.params.id;
 		const userId = req.user?.userId;
+		console.log(req.params);
 
 		const post = await Post.findById(postId)
 			.populate('author', '_id')
