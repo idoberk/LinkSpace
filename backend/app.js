@@ -18,10 +18,14 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/posts', require('./routes/postRoutes'));
 app.use('/api/groups', require('./routes/groupRoutes'));
 app.use('/api/comments', require('./routes/commentRoutes'));
+app.use('/api/messages', require('./routes/messageRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 
 app.use((err, req, res, next) => {
 	console.error(err.stack);
+	console.log('hello World');
+	console.log(err);
+
 	res.status(500).json({ error: 'Something went wrong!' });
 });
 
