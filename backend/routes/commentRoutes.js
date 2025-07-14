@@ -1,38 +1,31 @@
 const express = require('express');
 const router = express.Router();
 const commentController = require('../controllers/commentController');
-const { authenticate } = require('../middleware/authMiddleware');
+const authenticate = require('../middleware/authMiddleware');
 const { canViewPost } = require('../middleware/postMiddleware');
 const {
 	canEditComment,
 	canDeleteComment,
+	validateParentComment,
 } = require('../middleware/commentMiddleware');
 
-router.get(
-	'/post/:id',
-	authenticate,
+router.use(authenticate);
+
+router.get('/post/:id', canViewPost, commentController.getPostComments);
+
+router.get('/:id', commentController.getComment);
+
+router.post(
+	'/:id',
 	canViewPost,
-	commentController.getPostComments,
+	validateParentComment,
+	commentController.createComment,
 );
 
-router.get('/:id', authenticate, commentController.getComment);
+router.put('/:id', canEditComment, commentController.updateComment);
 
-router.post('/:id', authenticate, canViewPost, commentController.createComment);
+router.delete('/:id', canDeleteComment, commentController.deleteComment);
 
-router.put(
-	'/:id',
-	authenticate,
-	canEditComment,
-	commentController.updateComment,
-);
-
-router.delete(
-	'/:id',
-	authenticate,
-	canDeleteComment,
-	commentController.deleteComment,
-);
-
-router.post('/:id/like', authenticate, commentController.likeComment);
+router.post('/:id/like', commentController.likeComment);
 
 module.exports = router;
