@@ -14,6 +14,7 @@ const authenticate = require('../middleware/authMiddleware');
 const { uploadSingle } = require('../middleware/uploadMiddleware');
 const { handleUploadErrors } = require('../middleware/errorHandler');
 
+router.get('/:id/public-stats', groupController.getGroupStatsPublic);
 router.use(authenticate);
 
 router.get('/', groupController.searchGroups);

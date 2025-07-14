@@ -336,6 +336,24 @@ const likePost = async (req, res) => {
 	}
 };
 
+const getPostStatsPublic = async (req, res) => {
+	try {
+		const post = await Post.findById(req.params.id);
+		if (!post) return res.status(404).json({ error: 'Post not found' });
+
+		res.json({
+			createdAt: post.createdAt,
+			totalLikes: post.stats?.totalLikes || 0,
+			visibility: post.visibility,
+			group: post.group,
+			tags: post.tags,
+		});
+	} catch (error) {
+		const errors = handleErrors(error);
+		res.status(errors.status).json({ errors });
+	}
+};
+
 module.exports = {
 	createPost,
 	updatePost,
@@ -343,4 +361,5 @@ module.exports = {
 	searchPosts,
 	getAllPosts,
 	likePost,
+	getPostStatsPublic,
 };

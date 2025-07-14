@@ -13,9 +13,7 @@ const {
 const { parseFormData } = require('../utils/parseFormData');
 const { deleteGroupAndContent } = require('../services/groupService');
 const { PAST_30_DAYS } = require('../utils/constants');
-const {
-	updateUserStat,
-} = require('../services/userService');
+const { updateUserStat } = require('../services/userService');
 const { updateGroupStat } = require('../services/groupService');
 
 const createGroup = async (req, res) => {
@@ -936,6 +934,27 @@ const getGroupStats = async (req, res) => {
 	}
 };
 
+const getGroupStatsPublic = async (req, res) => {
+	try {
+		const group = await Group.findById(req.params.id);
+		if (!group) return res.status(404).json({ error: 'Group not found' });
+
+		res.json({
+			name: group.name,
+			category: group.category,
+			privacy: group.privacy,
+			createdAt: group.createdAt,
+			totalMembers: group.stats.totalMembers,
+			totalPosts: group.stats.totalPosts,
+			totalBanned: group.stats.totalBanned,
+			monthlyPosts: group.stats.monthlyPosts?.slice(-6) || [],
+		});
+	} catch (error) {
+		const errors = handleErrors(error);
+		res.status(errors.status).json({ errors });
+	}
+};
+
 module.exports = {
 	createGroup,
 	updateGroup,
@@ -954,4 +973,5 @@ module.exports = {
 	getMembershipHistory,
 	getPendingMembers,
 	getGroupStats,
+	getGroupStatsPublic,
 };

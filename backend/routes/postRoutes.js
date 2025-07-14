@@ -11,6 +11,7 @@ const {
 const { uploadMultiple } = require('../middleware/uploadMiddleware');
 const { handleUploadErrors } = require('../middleware/errorHandler');
 
+router.get('/:id/public-stats', postController.getPostStatsPublic);
 router.use(authenticate);
 
 router.get('/', postController.getAllPosts);
