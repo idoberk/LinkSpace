@@ -31,7 +31,7 @@ const Feed = () => {
 				<SubmitPostItem onPostSubmit={handlePostSubmit} />
 			</div>
 			{posts.map((post) => (
-				<Post key={post._id} post={post} />
+				<Post key={post._id} post={post} onPostChange={fetchPosts} />
 			))}
 		</div>
 	);

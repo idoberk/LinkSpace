@@ -5,6 +5,8 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import WelcomePage from './pages/WelcomePage';
 import Profile from './pages/Profile';
+import GroupsDisplay from './components/GroupsDisplay';
+import CreateGroup from './components/CreateGroup';
 import {
 	BrowserRouter as Router,
 	Routes,
@@ -35,6 +37,8 @@ const App = () => {
 				/>
 				<Route path='/home' element={<Home />} />
 				<Route path='/profile' element={<Profile />} />
+				<Route path='/groups' element={<GroupsDisplay />} />
+				<Route path='/create-group' element={<CreateGroup />} />
 			</Routes>
 		</Router>
 	);

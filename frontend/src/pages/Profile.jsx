@@ -1,20 +1,46 @@
 import TopBar from '../components/TopBar';
 import ProfilePicture from '../components/ProfilePicture';
+import Post from '../components/Post';
+import SubmitPostItem from '../components/SubmitPostItem';
 import { useLocation } from 'react-router-dom';
 import FeedButton from '../components/FeedButton';
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../lib/axios';
 
 // TODO: Add to the backend the birthdate to the public profile
 
 const Profile = () => {
-	const user =
+	const navigate = useNavigate();
+	const userFromLocation =
 		useLocation().state?.user || JSON.parse(localStorage.getItem('user'));
+
+	const [user, setUser] = useState(userFromLocation);
 	const [showMenu, setShowMenu] = useState(false);
-	// const [isUploading, setIsUploading] = useState(false);
+	const [uploading, setUploading] = useState(false);
+	const [uploadType, setUploadType] = useState(null);
 	const menuRef = useRef(null);
+	const fileInputRef = useRef(null);
 
 	console.log(user);
+	const [posts, setPosts] = useState([]);
 
+	const fetchPosts = async () => {
+		try {
+			const response = await api.get('/posts');
+			setPosts(response.data.posts);
+		} catch (error) {
+			console.error('Error fetching posts:', error);
+		}
+	};
+
+	useEffect(() => {
+		fetchPosts();
+	}, []);
+
+	const handlePostSubmit = () => {
+		fetchPosts();
+	};
 	// Close menu when clicking outside
 	useEffect(() => {
 		const handleClickOutside = (event) => {
@@ -30,15 +56,79 @@ const Profile = () => {
 	}, []);
 
 	const handleAddProfilePicture = () => {
-		// TODO: Implement profile picture upload
-		console.log('Add profile picture clicked');
+		setUploadType('avatar');
 		setShowMenu(false);
+		fileInputRef.current.click();
+		console.log('Add profile picture clicked');
 	};
 
 	const handleAddCoverPhoto = () => {
-		// TODO: Implement cover photo upload
-		console.log('Add cover photo clicked');
+		setUploadType('coverPhoto');
 		setShowMenu(false);
+		fileInputRef.current.click();
+		console.log('Add cover photo clicked');
+	};
+
+	const handleFileChange = async (e) => {
+		if (!e.target.files.length) return;
+		setUploading(true);
+		const file = e.target.files[0];
+		const formData = new FormData();
+		formData.append('file', file);
+		formData.append('type', uploadType);
+
+		try {
+			const res = await api.post('/upload/single', formData, {
+				headers: {
+					'Content-Type': 'multipart/form-data',
+				},
+			});
+
+			const data = res.data;
+
+			// update the picture of the user
+			const imageUrl = data.media?.url || data.url;
+			const fieldName =
+				uploadType === 'coverPhoto' ? 'coverImage' : 'avatar';
+
+			setUser((prev) => ({
+				...prev,
+				profile: {
+					...prev.profile,
+					[fieldName]: imageUrl,
+				},
+			}));
+
+			// update the localStorage
+			localStorage.setItem(
+				'user',
+				JSON.stringify({
+					...user,
+					profile: {
+						...user.profile,
+						[fieldName]: imageUrl,
+					},
+				}),
+			);
+
+			// update the profile in the server
+			try {
+				await api.put('/account/profile', {
+					profile: {
+						[fieldName]: imageUrl,
+					},
+				});
+			} catch (updateError) {
+				console.warn('Error updating profile in server:', updateError);
+			}
+		} catch (error) {
+			console.error('Upload error details:', error);
+			alert('Error uploading file: ' + error.message);
+		} finally {
+			setUploading(false);
+			setUploadType(null);
+			e.target.value = null; // reset the input to allow uploading the same file again if wanted
+		}
 	};
 
 	return (
@@ -51,10 +141,10 @@ const Profile = () => {
 						clipPath:
 							'polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%)',
 					}}>
-					{user?.profile?.CoverPhoto ? (
+					{user?.profile?.coverImage ? (
 						<img
 							alt='cover photo'
-							src={user?.profile.CoverPhoto}
+							src={user?.profile.coverImage}
 							className='w-full h-full object-cover'
 						/>
 					) : (
@@ -66,8 +156,8 @@ const Profile = () => {
 				<div className='absolute left-1/2 bottom-0 transform -translate-x-1/2 translate-y-1/2'>
 					<ProfilePicture
 						picture={
-							user?.profile?.avatar ||
-							'Add your first profile picture'
+							user?.profile?.avatar
+							// || 'Add your first profile picture'
 						}
 						width={250}
 						height={250}
@@ -77,9 +167,9 @@ const Profile = () => {
 						ref={menuRef}>
 						<FeedButton
 							className='px-4 py-2 rounded-full'
-							onClick={() => setShowMenu(!showMenu)}>
-							{' '}
-							+
+							onClick={() => setShowMenu(!showMenu)}
+							disabled={uploading}>
+							{uploading ? '...' : '+'}
 						</FeedButton>
 						{showMenu && (
 							<div className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[200px] z-10'>
@@ -99,11 +189,21 @@ const Profile = () => {
 					</div>
 				</div>
 			</div>
+			<input
+				type='file'
+				accept='image/*'
+				style={{ display: 'none' }}
+				ref={fileInputRef}
+				onChange={handleFileChange}
+			/>
 
 			<div className='flex justify-center items-center flex-col mt-32'>
 				<h1 className='text-2xl font-bold '>
 					{user?.profile?.firstName} {user?.profile?.lastName}
 				</h1>
+			</div>
+			<hr className='w-full my-4 border-gray-200' />
+			<div className='flex flex-col gap-1 ml-2'>
 				<h2 className='text-lg text-gray-500 mt-2'>
 					{user?.profile?.bio || 'No bio'}
 				</h2>
@@ -115,6 +215,25 @@ const Profile = () => {
 				</h2>
 			</div>
 			<hr className='w-full my-4 border-gray-200' />
+			<div className='h-screen w-4/5 mx-auto'>
+				<div className='flex justify-center items-center'>
+					<SubmitPostItem onPostSubmit={handlePostSubmit} />
+				</div>
+				{posts
+					.filter((post) => post.author._id === user._id)
+					.map((post) => (
+						<Post
+							key={post._id}
+							post={post}
+							onPostChange={fetchPosts}
+						/>
+					))}
+			</div>
+			<FeedButton
+				className='fixed bottom-6 right-4 z-50'
+				onClick={() => navigate('/home')}>
+				Return to Home Page
+			</FeedButton>
 		</div>
 	);
 };
