@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import Home from './pages/Home';
 import WelcomePage from './pages/WelcomePage';
 import Profile from './pages/Profile';
+import Statistics from './pages/Statistics';
 import GroupsDisplay from './components/GroupsDisplay';
 import CreateGroup from './components/CreateGroup';
 import {
@@ -39,6 +40,7 @@ const App = () => {
 				<Route path='/profile' element={<Profile />} />
 				<Route path='/groups' element={<GroupsDisplay />} />
 				<Route path='/create-group' element={<CreateGroup />} />
+				<Route path='/statistics' element={<Statistics />} />
 			</Routes>
 		</Router>
 	);

@@ -31,29 +31,4 @@ const authenticate = async (req, res, next) => {
 	}
 };
 
-const optionalAuth = async (req, res, next) => {
-	try {
-		const authHeader = req.headers.authorization;
-
-		if (authHeader && authHeader.startsWith('Bearer ')) {
-			const token = authHeader.substring(7); // remove the Bearer prefix
-			const decoded = jwt.verify(token, process.env.JWT_SECRET);
-			const user = await User.findById(decoded.userId).select(
-				'-password',
-			);
-
-			if (user) {
-				req.user = {
-					userId: decoded.userId,
-					user,
-				};
-			}
-		}
-
-		next();
-	} catch (error) {
-		next();
-	}
-};
-
-module.exports = { authenticate, optionalAuth };
+module.exports = authenticate;

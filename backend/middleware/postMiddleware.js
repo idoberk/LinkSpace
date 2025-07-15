@@ -3,6 +3,13 @@ const User = require('../models/User');
 const Group = require('../models/Group');
 const { handleErrors } = require('../middleware/errorHandler');
 const { createError } = require('../utils/errorUtils');
+const createValidationMiddleware = require('./validationMiddleware');
+
+const postValidation = createValidationMiddleware(Post, {
+	notFoundMessage: 'Post not found',
+	itemName: 'post',
+	authorField: 'author',
+});
 
 const validatePostSearchParams = (req, res, next) => {
 	const { page, limit, ...searchParams } = req.query;
@@ -49,7 +56,7 @@ const canViewPost = async (req, res, next) => {
 				return next();
 
 			case 'private': // Only the creator of the post can view private posts
-				if (!userId || post.author._id.toString() !== userId) {
+				if (post.author._id.toString() !== userId) {
 					throw createError(
 						'You do not have permissions to view this post',
 						403,
@@ -60,13 +67,6 @@ const canViewPost = async (req, res, next) => {
 				return next();
 
 			case 'friends': {
-				if (!userId) {
-					throw createError(
-						'Authentication required to view this post',
-						401,
-					);
-				}
-
 				const author = await User.findById(post.author._id);
 
 				if (!author.isFriendsWith(userId)) {
@@ -79,13 +79,6 @@ const canViewPost = async (req, res, next) => {
 			}
 
 			case 'group': {
-				if (!userId) {
-					throw createError(
-						'Authentication required to view this post',
-						401,
-					);
-				}
-
 				if (!post.group) {
 					throw createError('Group not found for this post', 404);
 				}
@@ -117,29 +110,38 @@ const canViewPost = async (req, res, next) => {
 	}
 };
 
-const isPostAuthor = async (req, res, next) => {
+const isPostAuthor = postValidation.checkAuthor('id');
+
+const canCreateGroupPost = async (req, res, next) => {
 	try {
-		const postId = req.params.id;
-		const userId = req.user.userId;
-		const post = await Post.findById(postId);
-
-		if (!post) {
-			throw createError('Post not found', 404);
-		}
-
-		if (post.author.toString() !== userId) {
-			throw createError(
-				'You do not have permissions to perform this action',
-				403,
+		const { groupId } = req.body;
+		const userId = req.user?.userId;
+		if (groupId) {
+			const group = await Group.findById(groupId);
+			if (!group) {
+				return res.status(404).json({ error: 'Group not found' });
+			}
+			const isMember = group.members.some(
+				(member) =>
+					member.user.toString() === userId &&
+					member.status === 'approved',
 			);
+			if (!isMember) {
+				return res.status(403).json({
+					error: 'You must be an approved member to post in this group',
+				});
+			}
 		}
-
-		req.post = post;
 		next();
 	} catch (error) {
 		const errors = handleErrors(error);
-		res.status(errors.status).json({ errors });
+		res.status(errors.status || 500).json({ errors });
 	}
 };
 
-module.exports = { validatePostSearchParams, canViewPost, isPostAuthor };
+module.exports = {
+	validatePostSearchParams,
+	canViewPost,
+	isPostAuthor,
+	canCreateGroupPost,
+};

@@ -44,6 +44,12 @@ const postSchema = new mongoose.Schema(
 				ref: 'User',
 			},
 		],
+		stats: {
+			totalLikes: {
+				type: Number,
+				default: 0,
+			},
+		},
 		visibility: {
 			type: String,
 			enum: ['public', 'friends', 'group', 'private'],

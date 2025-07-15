@@ -11,14 +11,6 @@ const {
 const userSchema = new mongoose.Schema(
 	{
 		// phoneNumber?
-		/* username: {
-			type: String,
-			required: [true, 'Username is required'],
-			unique: true,
-			trim: true,
-			minLength: [3, 'Username must be at least 3 characters long'],
-			maxLength: [30, 'Username cannot exceed 30 characters'],
-		}, */
 		email: {
 			type: String,
 			required: [true, 'Email is required'],
@@ -92,12 +84,8 @@ const userSchema = new mongoose.Schema(
 				type: String,
 			},
 			avatar: {
-				type: String,
-				default: '',
-			},
-			coverImage: {
-				type: String,
-				default: '',
+				url: String,
+				publicId: String,
 			},
 		},
 		friends: [
@@ -139,6 +127,7 @@ const userSchema = new mongoose.Schema(
 			},
 		],
 		role: {
+			// Application's admin, not group's admin. Doesn't have real usage at the moment, but can be useful in the future.
 			type: String,
 			enum: ['user', 'admin'],
 			default: 'user',
@@ -253,7 +242,6 @@ userSchema.methods.getPublicProfile = function (viewerId) {
 			firstName: this.profile.firstName,
 			lastName: this.profile.lastName,
 			avatar: this.profile.avatar,
-			coverImage: this.profile.coverImage,
 		},
 	};
 
@@ -281,10 +269,6 @@ userSchema.methods.getPublicProfile = function (viewerId) {
 
 userSchema.virtual('profile.fullName').get(function () {
 	return `${this.profile.firstName} ${this.profile.lastName}`;
-});
-
-userSchema.virtual('displayName').get(function () {
-	return this.profile.fullName;
 });
 
 userSchema.methods.comparePassword = async function (candidatePassword) {
