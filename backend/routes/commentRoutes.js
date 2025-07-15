@@ -9,6 +9,8 @@ const {
 	validateParentComment,
 } = require('../middleware/commentMiddleware');
 
+router.get('/', commentController.getAllComments);
+
 router.use(authenticate);
 
 router.get('/post/:id', canViewPost, commentController.getPostComments);

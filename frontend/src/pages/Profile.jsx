@@ -95,7 +95,10 @@ const Profile = () => {
 				...prev,
 				profile: {
 					...prev.profile,
-					[fieldName]: imageUrl,
+					[fieldName]: {
+						url: imageUrl,
+						publicId: data.media?.publicId || data.publicId,
+					},
 				},
 			}));
 
@@ -115,7 +118,10 @@ const Profile = () => {
 			try {
 				await api.put('/account/profile', {
 					profile: {
-						[fieldName]: imageUrl,
+						[fieldName]: {
+							url: imageUrl,
+							publicId: data.media?.publicId || data.publicId,
+						},
 					},
 				});
 			} catch (updateError) {
@@ -156,7 +162,7 @@ const Profile = () => {
 				<div className='absolute left-1/2 bottom-0 transform -translate-x-1/2 translate-y-1/2'>
 					<ProfilePicture
 						picture={
-							user?.profile?.avatar
+							user?.profile?.avatar?.url
 							// || 'Add your first profile picture'
 						}
 						width={250}

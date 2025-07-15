@@ -5,6 +5,7 @@ const ProfilePicture = ({
 	height = 220,
 	className = '',
 }) => (
+	
 	<svg
 		className={`profile-picture ${className}`}
 		viewBox='0 0 200 200'
