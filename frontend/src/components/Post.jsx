@@ -11,7 +11,7 @@ import api from '../lib/axios';
 // TODO: Show media in the post
 // TODO: add tags to the post
 
-// TODO: Fix edit post-change textErea, when user click on edit button, the post is not updated but in mongoDB it is updated and return 404
+// TODO: Fix edit post-change text, when user click on edit button, the post is not updated but in mongoDB it is updated and return 404
 const Post = ({ post, onPostChange }) => {
 	const [editing, setEditing] = useState(false);
 	const [content, setContent] = useState(post.content);
@@ -49,10 +49,6 @@ const Post = ({ post, onPostChange }) => {
 		}
 	};
 
-	// const handlePostEdit = (postId) => {
-	// 	console.log('postId', postId);
-	// };
-
 	return (
 		<div className='border border-gray-200 p-4 rounded-2xl mt-2'>
 			<div className='flex flex-row gap-2 items-center mb-2'>
@@ -81,11 +77,17 @@ const Post = ({ post, onPostChange }) => {
 			</span>
 			{editing ? (
 				<div>
-					<textarea
+					{/* <textarea
 						className='w-full border rounded p-2'
 						value={content}
 						onChange={(e) => setContent(e.target.value)}
 						rows={3}
+					/> */}
+					<input
+						type='text'
+						className='w-full border rounded p-2'
+						value={content}
+						onChange={(e) => setContent(e.target.value)}
 					/>
 					<FeedButton onClick={handleSave} disabled={saving}>
 						{saving ? 'Saving...' : 'Save'}

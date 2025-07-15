@@ -31,7 +31,6 @@ const Home = () => {
 				</div>
 				<div className='w-1/5 flex flex-col h-full overflow-y-auto'>
 					<FriendsDisplay />
-					<GroupsDisplay />
 				</div>
 			</div>
 		</div>

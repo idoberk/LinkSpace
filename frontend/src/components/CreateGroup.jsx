@@ -10,12 +10,12 @@ const CreateGroup = () => {
 		category: '',
 		privacy: '',
 	});
-	const [loading, setLoading] = useState(false);
+	// const [loading, setLoading] = useState(false);
 	const navigate = useNavigate();
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-		setLoading(true);
+		// setLoading(true);
 		try {
 			const formData = new FormData();
 			formData.append('name', form.name);
@@ -23,17 +23,27 @@ const CreateGroup = () => {
 			formData.append('category', form.category);
 			formData.append('privacy', form.privacy);
 			const response = await api.post('/groups', formData);
+			// const response = await api.post('/groups', {
+			// 	name: form.name,
+			// 	description: form.description,
+			// 	category: form.category,
+			// 	privacy: form.privacy,
+			// });
 			console.log(response);
 			alert('Group created successfully');
 			navigate('/groups');
 		} catch (error) {
+			alert('Could not create group ');
 			console.error(error);
-		} finally {
-			setLoading(false);
 		}
+		// } finally {
+		// 	setLoading(false);
+		// }
 	};
 	return (
-		<form className='w-150 rounded-md p-4 border border-gray-500 ml-4 mt-2 '>
+		<form
+			className='w-150 rounded-md p-4 border border-gray-500 ml-4 mt-2 '
+			onSubmit={handleSubmit}>
 			<h2 className='text-center mt-4 text-2xl text-gray-600 font-bold'>
 				Create New Group
 			</h2>
@@ -57,8 +67,9 @@ const CreateGroup = () => {
 					className='border border-gray-500 rounded-md p-2 vertical-align: top align-top text-left;'
 				/>
 				<select
-					text='Category'
-					placeholder='Category'
+					type='text'
+					name='category'
+					placeholder='category'
 					value={form.category}
 					onChange={(e) =>
 						setForm({ ...form, category: e.target.value })
@@ -70,10 +81,10 @@ const CreateGroup = () => {
 					<option value='Music'>Music</option>
 					<option value='Art'>Art</option>
 					<option value='Gaming'>Gaming</option>
-					<option value='Education'>Gaming</option>
-					<option value='Travel'>Gaming</option>
-					<option value='Food'>Gaming</option>
-					<option value='Health'>Gaming</option>
+					<option value='Education'>Education</option>
+					<option value='Travel'>Travel</option>
+					<option value='Food'>Food</option>
+					<option value='Health'>Health</option>
 					<option value='Other'>Other</option>
 				</select>
 				<select
@@ -89,12 +100,16 @@ const CreateGroup = () => {
 				</select>
 				{/* addcoverimage */}
 			</div>
+			<FeedButton type='submit' className='mt-4 '>
+				{/* // onClick={handleSubmit}
+				// disabled={loading} */}
+				Create group
+				{/* {loading ? 'Creating...' : 'Create Group'} */}
+			</FeedButton>
 			<FeedButton
-				type='submit'
-				className='mt-4 '
-				onClick={handleSubmit}
-				disabled={loading}>
-				{loading ? 'Creating...' : 'Create Group'}
+				className='mt-4 ml-4'
+				onClick={() => navigate('/groups')}>
+				Cancel
 			</FeedButton>
 		</form>
 	);
