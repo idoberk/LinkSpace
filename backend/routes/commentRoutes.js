@@ -11,7 +11,8 @@ const {
 
 // Get all comments for statistics (no authentication required)
 router.get('/', commentController.getAllComments);
-//router.use(authenticate);
+
+router.use(authenticate);
 
 router.get('/post/:id', canViewPost, commentController.getPostComments);
 
