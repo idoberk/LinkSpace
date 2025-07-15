@@ -4,6 +4,7 @@ import SettingsSuggestRoundedIcon from '@mui/icons-material/SettingsSuggestRound
 import ProfilePicture from './ProfilePicture';
 import FeedButton from './FeedButton';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import api from '../lib/axios';
 import { useState, useEffect, useRef } from 'react';
 import DeleteAccountModal from './DeleteAccount';

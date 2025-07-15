@@ -6,7 +6,6 @@ import Home from './pages/Home';
 import Statistics from './pages/Statistics';
 import WelcomePage from './pages/WelcomePage';
 import Profile from './pages/Profile';
-import Statistics from './pages/Statistics';
 import GroupsDisplay from './components/GroupsDisplay';
 import CreateGroup from './components/CreateGroup';
 import {
