@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Input from '../components/Input';
-import Button from '../components/Button';
+import Input from './Input';
+import Button from './Button';
 import api from '../lib/axios';
 import { useInput } from '../hooks/useInput';
-import { PasswordInput } from '../components/PasswordInput';
+import { PasswordInput } from './PasswordInput';
 import { MIN_PASS_LENGTH } from '../utils/constants';
 import { hasMinLength, isEmail } from '../utils/validation';
+import { setToken, setUser } from '../utils/auth';
 
-const Login = () => {
+const Login = ({ onSwitchToRegister }) => {
 	const navigate = useNavigate();
 	const [loading, setLoading] = useState(false);
 
@@ -40,13 +41,8 @@ const Login = () => {
 				email: emailValue,
 				password: passwordValue,
 			});
-			console.log(
-				'Login successful:',
-				response.data.user,
-				response.data.token,
-			);
-			localStorage.setItem('user', JSON.stringify(response.data.user));
-			localStorage.setItem('token', response.data.token);
+			setUser(response.data.user);
+			setToken(response.data.token);
 			navigate('/home');
 		} catch (error) {
 			console.log(
@@ -96,13 +92,13 @@ const Login = () => {
 				</Button>
 			</form>
 			<div className='text-center'>
-				<Button
-					onClick={() => navigate('/register')}
-					className={
-						'text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200'
-					}>
+				<button
+					type='button'
+					onClick={onSwitchToRegister}
+					className='text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200'
+					aria-label='Switch to register'>
 					Create a new account
-				</Button>
+				</button>
 			</div>
 		</div>
 	);

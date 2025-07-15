@@ -230,7 +230,8 @@ const searchGroups = async (req, res) => {
 		let andFilters = [];
 
 		if (name) {
-			andFilters.push({ $text: { $search: name } });
+			andFilters.push({ name: { $regex: name, $options: 'i' } });
+			// andFilters.push({ name: { $regex: '^' + name, $options: 'i' } });
 		}
 
 		if (category) {

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import ProfilePicture from './ProfilePicture';
 import api from '../lib/axios';
+import { useUser } from '../hooks/useUser';
 const FriendsDisplay = () => {
-	const user = JSON.parse(localStorage.getItem('user'));
+	const { user } = useUser();
 	const [friendsID] = useState(user?.friends || []);
 	const [friends, setFriends] = useState([]);
 	const [loading, setLoading] = useState(false);
@@ -69,7 +70,9 @@ const FriendsDisplay = () => {
 								key={friend.userId}
 								className='flex items-center gap-2 p-3 bg-gray-50 space-y-2 rounded-lg'>
 								<ProfilePicture
-									profile={friend?.profile || null}
+									picture={
+										friend?.profile?.profile?.avatar?.url
+									}
 									width={40}
 									height={40}
 								/>
