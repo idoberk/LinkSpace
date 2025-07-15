@@ -1,108 +1,125 @@
 const Group = require('../models/Group');
-const { handleErrors } = require('../middleware/errorHandler');
-const { createError } = require('../utils/errorUtils');
+const createValidationMiddleware = require('./validationMiddleware');
 
-const isGroupMember = async (req, res, next) => {
+const groupValidation = createValidationMiddleware(Group, {
+	notFoundMessage: 'Group not found',
+	itemName: 'group',
+	authorField: 'creator',
+});
+
+const isGroupAdmin = groupValidation.checkRole('admins', 'group admin', 'id');
+const isGroupCreator = groupValidation.checkAuthor('id');
+const isGroupMember = groupValidation.validateAccess(
+	{
+		requireMember: true,
+		memberField: 'members',
+		memberOptions: {
+			statusField: 'status',
+			requiredStatus: 'approved',
+			checkStatus: true,
+		},
+	},
+	'id',
+);
+
+const canManageGroup = groupValidation.validateAccess(
+	{
+		requireRole: true,
+		roleField: 'admins',
+		roleName: 'group admin',
+		requireNotBanned: true,
+	},
+	'id',
+);
+
+const isNotBanned = async (req, res, next) => {
 	try {
-		const groupId = req.params.id;
+		const group = req.group || (await Group.findById(req.params.id));
 		const userId = req.user.userId;
-		const group = await Group.findById(groupId);
-
-		if (!group) {
-			throw createError('Group not found', 404);
+		if (group && group.isUserBanned(userId)) {
+			return res
+				.status(403)
+				.json({ error: 'You are banned from this group' });
 		}
-
-		const member = group.members.find(
-			(m) => m.user.toString() === userId && m.status === 'approved',
-		);
-
-		if (!member) {
-			throw createError('You must be a member of this group', 403);
-		}
-
-		req.group = group;
 		next();
 	} catch (error) {
-		const errors = handleErrors(error);
-		res.status(errors.status).json({ errors });
+		next(error);
 	}
 };
 
-const isGroupAdmin = async (req, res, next) => {
+const isNotMember = async (req, res, next) => {
 	try {
-		const groupId = req.params.id;
+		const group = req.group || (await Group.findById(req.params.id));
 		const userId = req.user.userId;
-		const group = await Group.findById(groupId);
-
-		if (!group) {
-			throw createError('Group not found', 404);
+		if (
+			group &&
+			group.members.some(
+				(m) => m.user.toString() === userId && m.status === 'approved',
+			)
+		) {
+			return res
+				.status(400)
+				.json({ error: 'You are already a member of this group' });
 		}
-
-		const isAdmin = group.admins.some(
-			(admin) => admin.toString() === userId,
-		);
-
-		if (!isAdmin) {
-			throw createError('Only group admins can perform this action', 403);
-		}
-
-		req.group = group;
 		next();
 	} catch (error) {
-		const errors = handleErrors(error);
-		res.status(errors.status).json({ errors });
+		next(error);
 	}
 };
 
-const isGroupCreator = async (req, res, next) => {
+const isPendingMember = async (req, res, next) => {
 	try {
-		const groupId = req.params.id;
+		const group = req.group || (await Group.findById(req.params.id));
 		const userId = req.user.userId;
-		const group = await Group.findById(groupId);
-
-		if (!group) {
-			throw createError('Group not found', 404);
-		}
-
-		if (group.creator.toString() !== userId) {
-			throw createError(
-				'Only the group creator can perform this action',
-				403,
+		const pending =
+			group &&
+			group.members.find(
+				(m) => m.user.toString() === userId && m.status === 'pending',
 			);
+		if (pending) {
+			return res.status(400).json({
+				error: 'You already have a pending request to join this group',
+			});
 		}
-
-		req.group = group;
 		next();
 	} catch (error) {
-		const errors = handleErrors(error);
-		res.status(errors.status).json({ errors });
+		next(error);
 	}
 };
 
-/* const canViewGroup = async (req, res, next) => {
+// Middleware to check if a target user is a group member (Unlike the other functions that check the user that sent the request)
+const isTargetGroupMember = async (req, res, next) => {
 	try {
-		const groupId = req.params.id;
-		const userId = req.user?.userId;
-		const group = await Group.findById(groupId)
-
-		if (!group) {
-			throw createError('Group not found', 404);
+		const group = req.group || (await Group.findById(req.params.id));
+		const targetUserId = req.params.userId || req.body.userId;
+		if (!targetUserId) {
+			return res.status(400).json({ error: 'User ID is required' });
 		}
-
-		if (group.privacy === 'public') {
-			req.group = group;
-			return next();
+		const isMember =
+			group &&
+			group.members.some(
+				(m) =>
+					m.user.toString() === targetUserId &&
+					m.status === 'approved',
+			);
+		if (!isMember) {
+			return res
+				.status(404)
+				.json({ error: 'User is not a member of this group' });
 		}
-
-		if (!userId) {
-			throw createError('')
-		}
+		next();
+	} catch (error) {
+		next(error);
 	}
-}; */
+};
 
 module.exports = {
 	isGroupMember,
 	isGroupAdmin,
 	isGroupCreator,
-	//canViewGroup,
+	canManageGroup,
+	isNotBanned,
+	isNotMember,
+	isPendingMember,
+	isTargetGroupMember,
 };

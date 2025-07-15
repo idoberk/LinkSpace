@@ -34,8 +34,3 @@ module.exports = {
 	uploadMultiple: (fieldName = 'files', maxCount = MAX_FILE_UPLOADS) =>
 		upload.array(fieldName, maxCount),
 };
-
-/* module.exports = {
-	uploadSingle: upload.single('file'),
-	uploadMultiple: upload.array('files', MAX_FILE_UPLOADS),
-}; */

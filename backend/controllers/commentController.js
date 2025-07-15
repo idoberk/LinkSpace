@@ -1,10 +1,9 @@
-const mongoose = require('mongoose');
 const Comment = require('../models/Comment');
 const Post = require('../models/Post');
-const User = require('../models/User');
 const { toggleLike } = require('../services/likeService');
 const { handleErrors } = require('../middleware/errorHandler');
 const { createError } = require('../utils/errorUtils');
+const { updateCommentStat } = require('../services/commentService');
 
 const createComment = async (req, res) => {
 	try {
@@ -22,33 +21,9 @@ const createComment = async (req, res) => {
 			throw createError('Post not found', 404);
 		}
 
-		let parentComment = null;
-		let depth = 0;
-
-		if (parentCommentId) {
-			parentComment = await Comment.findById(parentCommentId);
-
-			if (!parentComment) {
-				throw createError('Parent comment not found', 404);
-			}
-
-			if (parentComment.post.toString() !== postId) {
-				throw createError(
-					'Parent comment does not belong to this post',
-					400,
-				);
-			}
-
-			if (parentComment.isDeleted) {
-				throw createError('Cannot reply to a deleted comment', 400);
-			}
-
-			depth = parentComment.depth + 1;
-
-			if (depth > 3) {
-				throw createError('Maximum comment nesting depth reached', 400);
-			}
-		}
+		// Parent comment and nesting validation is handled by middleware
+		const parentComment = req.parentComment || null;
+		const depth = parentComment ? parentComment.depth + 1 : 0;
 
 		const comment = new Comment({
 			post: postId,
@@ -61,8 +36,7 @@ const createComment = async (req, res) => {
 		await comment.save();
 
 		if (parentComment) {
-			parentComment.stats.totalReplies += 1;
-			await parentComment.save();
+			await updateCommentStat(parentComment._id, 'stats.totalReplies', 1);
 		}
 
 		post.comments.push(comment._id);
@@ -118,7 +92,6 @@ const updateComment = async (req, res) => {
 const deleteComment = async (req, res) => {
 	try {
 		const commentId = req.params.id;
-		const userId = req.user.userId;
 		const comment = await Comment.findById(commentId);
 
 		await comment.softDelete();

@@ -1,6 +1,12 @@
 const cloudinary = require('../config/cloudinary');
 const { createError } = require('../utils/errorUtils');
 
+/**
+ * Uploads a file buffer to Cloudinary.
+ * @param {Buffer} fileBuffer - The file buffer
+ * @param {Object} options - Upload options (folder, resource_type, transformation, etc.)
+ * @returns {Promise<Object>} - The upload result
+ */
 const uploadToCloudinary = (fileBuffer, options = {}) => {
 	return new Promise((resolve, reject) => {
 		cloudinary.uploader
@@ -43,6 +49,12 @@ const uploadToCloudinary = (fileBuffer, options = {}) => {
 	});
 };
 
+/**
+ * Deletes a file from Cloudinary by publicId.
+ * @param {string} publicId - The Cloudinary public ID
+ * @param {string} [resourceType='image'] - The resource type (image, video, etc.)
+ * @returns {Promise<Object>} - The delete result
+ */
 const deleteFromCloudinary = async (publicId, resourceType = 'image') => {
 	try {
 		return await cloudinary.uploader.destroy(publicId, {
@@ -53,6 +65,11 @@ const deleteFromCloudinary = async (publicId, resourceType = 'image') => {
 	}
 };
 
+/**
+ * Formats Cloudinary upload result into a media object for DB storage.
+ * @param {Object} uploadResult - The Cloudinary upload result
+ * @returns {Object} - The formatted media object
+ */
 const formatMediaData = (uploadResult) => {
 	return {
 		type: uploadResult.resourceType === 'video' ? 'video' : 'image',
@@ -66,6 +83,11 @@ const formatMediaData = (uploadResult) => {
 	};
 };
 
+/**
+ * Returns transformation options for different upload types.
+ * @param {string} uploadType - The type of upload (avatar, cover, post, etc.)
+ * @returns {Array<Object>} - The transformation options
+ */
 const getTransformationOptions = (uploadType) => {
 	const transformations = {
 		avatar: [{ width: 300, height: 300, crop: 'fill', gravity: 'face' }],
@@ -79,6 +101,12 @@ const getTransformationOptions = (uploadType) => {
 	return transformations[uploadType] || transformations.default;
 };
 
+/**
+ * Processes a single file buffer and uploads to Cloudinary.
+ * @param {Buffer} fileBuffer - The file buffer
+ * @param {Object} options - Upload options
+ * @returns {Promise<Object>} - The formatted media object
+ */
 const processSingleFile = async (fileBuffer, options = {}) => {
 	try {
 		const uploadResult = await uploadToCloudinary(fileBuffer, options);
@@ -88,6 +116,12 @@ const processSingleFile = async (fileBuffer, options = {}) => {
 	}
 };
 
+/**
+ * Processes multiple files and uploads to Cloudinary.
+ * @param {Array<{buffer: Buffer}>} files - Array of file objects with buffer
+ * @param {Object} options - Upload options
+ * @returns {Promise<Array<Object>>} - Array of formatted media objects
+ */
 const processMultipleFiles = async (files, options = {}) => {
 	if (!files || files.length === 0) {
 		return [];
@@ -110,6 +144,11 @@ const processMultipleFiles = async (files, options = {}) => {
 	}
 };
 
+/**
+ * Deletes an array of media files from Cloudinary.
+ * @param {Array<Object>} mediaArray - Array of media objects with publicId/type
+ * @returns {Promise<void>}
+ */
 const deleteMediaFiles = async (mediaArray) => {
 	if (!mediaArray || mediaArray.length === 0) return;
 
@@ -130,6 +169,11 @@ const deleteMediaFiles = async (mediaArray) => {
 	}
 };
 
+/**
+ * Cleans up successfully uploaded files if a batch upload fails.
+ * @param {Array<Object>} uploadResults - Array of upload results
+ * @returns {Promise<void>}
+ */
 const cleanupFailedUploads = async (uploadResults) => {
 	const successfulUploads = uploadResults.filter(
 		(result) => result && result.publicId,

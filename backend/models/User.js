@@ -84,8 +84,8 @@ const userSchema = new mongoose.Schema(
 				type: String,
 			},
 			avatar: {
-				type: String,
-				default: '',
+				url: String,
+				publicId: String,
 			},
 		},
 		friends: [
@@ -269,10 +269,6 @@ userSchema.methods.getPublicProfile = function (viewerId) {
 
 userSchema.virtual('profile.fullName').get(function () {
 	return `${this.profile.firstName} ${this.profile.lastName}`;
-});
-
-userSchema.virtual('displayName').get(function () {
-	return this.profile.fullName;
 });
 
 userSchema.methods.comparePassword = async function (candidatePassword) {

@@ -13,6 +13,8 @@ const {
 const { parseFormData } = require('../utils/parseFormData');
 const { deleteGroupAndContent } = require('../services/groupService');
 const { PAST_30_DAYS } = require('../utils/constants');
+const { updateUserStat } = require('../services/userService');
+const { updateGroupStat } = require('../services/groupService');
 
 const createGroup = async (req, res) => {
 	let group = null;
@@ -132,7 +134,7 @@ const updateGroup = async (req, res) => {
 				url: coverImageData.url,
 				publicId: coverImageData.publicId,
 			};
-		} // TODO: add an option to remove a cover image?
+		}
 
 		if (description !== undefined) {
 			group.description = description;
@@ -227,22 +229,18 @@ const searchGroups = async (req, res) => {
 		const skip = (page - 1) * limit;
 		let andFilters = [];
 
-		// Name (text search)
 		if (name) {
 			andFilters.push({ $text: { $search: name } });
 		}
 
-		// Category
 		if (category) {
 			andFilters.push({ category });
 		}
 
-		// Privacy
 		if (privacy) {
 			andFilters.push({ privacy });
 		}
 
-		// Created date
 		if (createdAfter || createdBefore) {
 			let createdAt = {};
 			if (createdAfter) createdAt.$gte = new Date(createdAfter);
@@ -250,7 +248,6 @@ const searchGroups = async (req, res) => {
 			andFilters.push({ createdAt });
 		}
 
-		// Minimum members
 		if (minMembers) {
 			andFilters.push({
 				'stats.totalMembers': { $gte: parseInt(minMembers) },
@@ -259,11 +256,9 @@ const searchGroups = async (req, res) => {
 
 		const query = andFilters.length > 0 ? { $and: andFilters } : {};
 
-		// Sorting
 		const sort = {};
 		sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
 
-		// Only select public-facing fields
 		const publicFields =
 			'_id name description category privacy coverImage creator admins members stats createdAt updatedAt';
 
@@ -312,7 +307,7 @@ const getGroupById = async (req, res) => {
 				.status(400)
 				.json({ errors: { message: 'Group ID is required' } });
 		}
-		// Only select public-facing fields
+
 		const publicFields =
 			'_id name description category privacy coverImage creator admins members stats createdAt updatedAt';
 		const group = await Group.findById(groupId)
@@ -349,32 +344,6 @@ const joinGroup = async (req, res) => {
 		const userId = req.user.userId;
 		const group = await Group.findById(groupId);
 
-		if (!group) {
-			throw createError('Group not found', 404);
-		}
-
-		if (group.isUserBanned(userId)) {
-			throw createError('You are banned from this group', 403);
-		}
-
-		const existingMember = group.members.find(
-			(m) => m.user.toString() === userId,
-		);
-
-		if (existingMember) {
-			if (existingMember.status === 'approved') {
-				throw createError(
-					'You are already a member of this group',
-					400,
-				);
-			} else if (existingMember.status === 'pending') {
-				throw createError(
-					'You already have a pending request to join this group',
-					400,
-				);
-			}
-		}
-
 		const joiningRequiresApproval =
 			group.settings?.joiningRequiresApproval !== false;
 		const memberStatus = joiningRequiresApproval ? 'pending' : 'approved';
@@ -389,8 +358,7 @@ const joinGroup = async (req, res) => {
 			await User.findByIdAndUpdate(userId, {
 				$push: { groups: groupId },
 			});
-
-			group.stats.totalMembers = group.approvedMembers.length;
+			await updateGroupStat(groupId, 'stats.totalMembers', 1);
 		}
 
 		group.settings.activity.lastActivity = new Date();
@@ -439,7 +407,9 @@ const leaveGroup = async (req, res) => {
 			performedBy: userId,
 		});
 
-		group.stats.totalMembers = group.approvedMembers.length;
+		await updateGroupStat(group._id, 'stats.totalMembers', -1);
+
+		group.settings.activity.lastActivity = new Date();
 
 		await group.save();
 
@@ -492,7 +462,7 @@ const handleJoinRequest = async (req, res) => {
 				performedBy: adminId,
 			});
 
-			group.stats.totalMembers = group.approvedMembers.length;
+			await updateGroupStat(group._id, 'stats.totalMembers', 1);
 		} else {
 			group.members.splice(memberIndex, 1);
 		}
@@ -524,17 +494,9 @@ const removeGroupMember = async (req, res) => {
 			throw createError('Cannot remove the group creator', 400);
 		}
 
-		const memberIndex = group.members.findIndex(
-			(m) =>
-				m.user.toString() === memberToRemoveId &&
-				m.status === 'approved',
+		group.members = group.members.filter(
+			(m) => m.user.toString() !== memberToRemoveId,
 		);
-
-		if (memberIndex === -1) {
-			throw createError('User is not a member of this group', 404);
-		}
-
-		group.members.splice(memberIndex, 1);
 
 		group.admins = group.admins.filter(
 			(admin) => admin.toString() !== memberToRemoveId,
@@ -548,7 +510,7 @@ const removeGroupMember = async (req, res) => {
 			reason: reason || 'No reason provided',
 		});
 
-		group.stats.totalMembers = group.approvedMembers.length;
+		await updateGroupStat(group._id, 'stats.totalMembers', -1);
 		group.settings.activity.lastActivity = new Date();
 
 		await group.save();
@@ -569,16 +531,6 @@ const promoteToGroupAdmin = async (req, res) => {
 		const group = req.group;
 		const newAdminId = req.params.userId;
 		const currentAdminId = req.user.userId;
-		const member = group.members.find(
-			(m) => m.user.toString() === newAdminId && m.status === 'approved',
-		);
-
-		if (!member) {
-			throw createError(
-				'User must be an approved member of this group',
-				400,
-			);
-		}
 
 		if (group.admins.some((admin) => admin.toString() === newAdminId)) {
 			throw createError('User is already an admin', 400);
@@ -596,11 +548,6 @@ const promoteToGroupAdmin = async (req, res) => {
 		group.settings.activity.lastActivity = new Date();
 
 		await group.save();
-
-		await group.populate({
-			path: 'admins',
-			select: 'profile.firstName profile.lastName profile.avatar',
-		});
 
 		res.json({
 			message: 'User promoted to admin successfully',
@@ -681,9 +628,7 @@ const deleteGroupPost = async (req, res) => {
 
 		await Promise.all([
 			// Update user stats
-			User.findByIdAndUpdate(post.author, {
-				$inc: { 'stats.totalPosts': -1 },
-			}),
+			updateUserStat(post.author, 'stats.totalPosts', -1),
 
 			// Update group stats
 			Group.findByIdAndUpdate(group._id, {
@@ -709,6 +654,10 @@ const banUser = async (req, res) => {
 			throw createError('User ID is required', 400);
 		}
 
+		if (userId.toString() === adminId.toString()) {
+			throw createError('Cannot ban yourself', 403);
+		}
+
 		if (group.creator.toString() === userId) {
 			throw createError('Cannot ban the group creator', 403);
 		}
@@ -717,15 +666,9 @@ const banUser = async (req, res) => {
 			throw createError('User is already banned from this group', 400);
 		}
 
-		const memberIndex = group.members.findIndex(
-			(m) => m.user.toString() === userId,
+		group.members = group.members.filter(
+			(m) => m.user.toString() !== userId,
 		);
-
-		if (memberIndex === -1) {
-			throw createError('User is not a member of this group', 404);
-		}
-
-		group.members.splice(memberIndex, 1);
 
 		group.admins = group.admins.filter(
 			(admin) => admin.toString() !== userId,
@@ -746,8 +689,8 @@ const banUser = async (req, res) => {
 			reason: reason || 'No reason provided',
 		});
 
-		group.stats.totalMembers = group.approvedMembers.length;
-		group.stats.totalBanned = group.banList.length;
+		await updateGroupStat(group._id, 'stats.totalMembers', -1);
+		await updateGroupStat(group._id, 'stats.totalBanned', 1);
 		group.settings.activity.lastActivity = new Date();
 
 		await group.save();
@@ -991,6 +934,27 @@ const getGroupStats = async (req, res) => {
 	}
 };
 
+const getGroupStatsPublic = async (req, res) => {
+	try {
+		const group = await Group.findById(req.params.id);
+		if (!group) return res.status(404).json({ error: 'Group not found' });
+
+		res.json({
+			name: group.name,
+			category: group.category,
+			privacy: group.privacy,
+			createdAt: group.createdAt,
+			totalMembers: group.stats.totalMembers,
+			totalPosts: group.stats.totalPosts,
+			totalBanned: group.stats.totalBanned,
+			monthlyPosts: group.stats.monthlyPosts?.slice(-6) || [],
+		});
+	} catch (error) {
+		const errors = handleErrors(error);
+		res.status(errors.status).json({ errors });
+	}
+};
+
 module.exports = {
 	createGroup,
 	updateGroup,
@@ -1009,4 +973,5 @@ module.exports = {
 	getMembershipHistory,
 	getPendingMembers,
 	getGroupStats,
+	getGroupStatsPublic,
 };

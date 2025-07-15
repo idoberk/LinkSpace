@@ -53,10 +53,25 @@ const getConversations = async (req, res) => {
 		})
 			.populate(
 				'participants',
-				'profile.firstName profile.lastName profile.avatar status.isOnline',
+				'profile.firstName profile.lastName profile.avatar status.isOnline status.isActive status.lastSeen settings.privacy.showOnlineStatus',
 			)
 			.populate('lastMessage')
 			.sort({ lastMessageAt: -1 });
+
+		conversations.forEach((conversation) => {
+			conversation.participants.forEach((participant) => {
+				if (
+					participant.settings?.privacy?.showOnlineStatus ===
+					'private'
+				) {
+					participant.status = {
+						isOnline: null,
+						isActive: null,
+						lastSeen: null,
+					};
+				}
+			});
+		});
 
 		res.json({ conversations });
 	} catch (error) {

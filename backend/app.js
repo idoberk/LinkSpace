@@ -6,9 +6,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// TODO: add date/time conversion --> MongoDB uses UTC timezone.
-// TODO: Clean the code and create global validation middleware to prevent code repetition
-
 app.get('/api/test', (req, res) => {
 	res.json({ message: 'LinkSpace API is working!' });
 });
@@ -23,9 +20,6 @@ app.use('/api/upload', require('./routes/uploadRoutes'));
 
 app.use((err, req, res, next) => {
 	console.error(err.stack);
-	console.log('hello World');
-	console.log(err);
-
 	res.status(500).json({ error: 'Something went wrong!' });
 });
 

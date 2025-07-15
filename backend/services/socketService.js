@@ -6,6 +6,11 @@ const { createError } = require('../utils/errorUtils');
 
 const connectedUsers = new Map();
 
+/**
+ * Authenticates a socket connection using JWT.
+ * @param {Object} socket - The socket.io socket
+ * @param {Function} next - The next middleware function
+ */
 const authenticateSocket = async (socket, next) => {
 	try {
 		const token = socket.handshake.auth.token;
@@ -29,6 +34,10 @@ const authenticateSocket = async (socket, next) => {
 	}
 };
 
+/**
+ * Handles user connection logic (status, room join, etc.).
+ * @param {Object} socket - The socket.io socket
+ */
 const handleUserConnection = async (socket) => {
 	console.log(`User ${socket.user.profile.firstName} connected`);
 
@@ -42,6 +51,10 @@ const handleUserConnection = async (socket) => {
 	socket.join(`user_${socket.userId}`);
 };
 
+/**
+ * Handles user disconnection logic (status, cleanup, etc.).
+ * @param {Object} socket - The socket.io socket
+ */
 const handleUserDisconnection = async (socket) => {
 	console.log(`User ${socket.user.profile.firstName} disconnected`);
 
@@ -53,6 +66,13 @@ const handleUserDisconnection = async (socket) => {
 	}).exec();
 };
 
+/**
+ * Emits an event to a specific recipient by user ID.
+ * @param {Object} io - The socket.io server instance
+ * @param {string} recipientId - The recipient user ID
+ * @param {string} event - The event name
+ * @param {Object} data - The event data
+ */
 const emitToRecipient = (io, recipientId, event, data) => {
 	const recipientSocketId = connectedUsers.get(recipientId);
 
@@ -61,6 +81,14 @@ const emitToRecipient = (io, recipientId, event, data) => {
 	}
 };
 
+/**
+ * Notifies all other participants in a conversation except the current user.
+ * @param {Object} io - The socket.io server instance
+ * @param {Object} conversation - The conversation document
+ * @param {string} currentUserId - The current user's ID
+ * @param {string} event - The event name
+ * @param {Object} data - The event data
+ */
 const notifyOtherParticipants = (
 	io,
 	conversation,
@@ -75,6 +103,12 @@ const notifyOtherParticipants = (
 	});
 };
 
+/**
+ * Handles sending a message via socket.
+ * @param {Object} socket - The socket.io socket
+ * @param {Object} io - The socket.io server instance
+ * @param {Object} data - The message data
+ */
 const handleSendMessage = async (socket, io, data) => {
 	try {
 		const {
@@ -108,6 +142,12 @@ const handleSendMessage = async (socket, io, data) => {
 	}
 };
 
+/**
+ * Handles marking messages as read via socket.
+ * @param {Object} socket - The socket.io socket
+ * @param {Object} io - The socket.io server instance
+ * @param {Object} data - The data containing conversationId
+ */
 const handleMarkAsRead = async (socket, io, data) => {
 	try {
 		const { conversationId } = data;
@@ -134,6 +174,13 @@ const handleMarkAsRead = async (socket, io, data) => {
 	}
 };
 
+/**
+ * Handles typing indicator events via socket.
+ * @param {Object} socket - The socket.io socket
+ * @param {Object} io - The socket.io server instance
+ * @param {Object} data - The typing data
+ * @param {boolean} isTyping - Whether the user is typing
+ */
 const handleTypingIndicator = async (socket, io, data, isTyping) => {
 	try {
 		const { conversationId, recipientId } = data;
@@ -165,11 +212,12 @@ const handleTypingIndicator = async (socket, io, data, isTyping) => {
 	}
 };
 
+/**
+ * Sets up all socket event handlers for the server.
+ * @param {Object} io - The socket.io server instance
+ */
 const setupSocketHandlers = (io) => {
-	console.log('Hello');
-
 	io.use(authenticateSocket);
-
 	io.on('connection', (socket) => {
 		handleUserConnection(socket);
 

@@ -1,10 +1,15 @@
 const Group = require('../models/Group');
-const Comment = require('../models/Comment');
 const Post = require('../models/Post');
 const { createError } = require('../utils/errorUtils');
 const { deleteMediaFiles } = require('./mediaService');
 const { PAST_30_DAYS } = require('../utils/constants');
+const { deletePostAndComments } = require('./postService');
 
+/**
+ * Checks if group ownership transfer is allowed based on group settings and member count.
+ * @param {Object} group - The group document
+ * @returns {boolean}
+ */
 const shouldAllowOwnershipTransfer = (group) => {
 	if (!group.settings?.ownershipTransfer?.enabled) {
 		return false;
@@ -21,6 +26,11 @@ const shouldAllowOwnershipTransfer = (group) => {
 	return approvedMembersCount >= minimumMembers;
 };
 
+/**
+ * Checks if the group has been active in the past 30 days.
+ * @param {Object} group - The group document
+ * @returns {boolean}
+ */
 const isGroupActiveEnough = (group) => {
 	const lastActivity = group.settings?.activity?.lastActivity;
 
@@ -33,7 +43,13 @@ const isGroupActiveEnough = (group) => {
 	return new Date(lastActivity) > activePastMonth;
 };
 
-// TODO: Consider adding more hierarchial transfers (most active member / oldest member / etc...)
+/**
+ * Finds a new group owner (admin) if the current owner is removed.
+ * @param {Object} group - The group document
+ * @param {string|ObjectId} currentOwnerId - The current owner's user ID
+ * @param {Object} session - Mongoose session
+ * @returns {Promise<Object|null>} - The new owner user document or null
+ */
 const findNewGroupOwner = async (group, currentOwnerId, session) => {
 	if (!shouldAllowOwnershipTransfer(group) || !isGroupActiveEnough(group)) {
 		return null;
@@ -58,6 +74,13 @@ const findNewGroupOwner = async (group, currentOwnerId, session) => {
 	return null;
 };
 
+/**
+ * Transfers group ownership to a new owner.
+ * @param {string|ObjectId} groupId - The group ID
+ * @param {Object} newOwner - The new owner user document
+ * @param {Object} session - Mongoose session
+ * @returns {Promise<void>}
+ */
 const transferGroupOwnership = async (groupId, newOwner, session) => {
 	await Group.findByIdAndUpdate(
 		groupId,
@@ -80,8 +103,12 @@ const transferGroupOwnership = async (groupId, newOwner, session) => {
 	);
 };
 
-// TODO: Maybe when deleting groups / posts / etc... delete the folders from cloudinary too and not just the files.
-
+/**
+ * Deletes a group and all its posts, comments, and media.
+ * @param {string|ObjectId} groupId - The group ID
+ * @param {Object} session - Mongoose session
+ * @returns {Promise<void>}
+ */
 const deleteGroupAndContent = async (groupId, session) => {
 	const group = await Group.findById(groupId).session(session);
 
@@ -100,9 +127,7 @@ const deleteGroupAndContent = async (groupId, session) => {
 		}
 	}
 
-	const groupPosts = await Post.find({ group: groupId }, 'media', {
-		session,
-	});
+	const groupPosts = await Post.find({ group: groupId }, null, { session });
 
 	for (const post of groupPosts) {
 		if (post.media && post.media.length > 0) {
@@ -118,16 +143,19 @@ const deleteGroupAndContent = async (groupId, session) => {
 				);
 			}
 		}
+		// Recursively delete post and all its comments
+		await deletePostAndComments(post._id, session);
 	}
 
-	await Post.deleteMany({ group: groupId }, { session });
-
-	const postIds = groupPosts.map((post) => post._id);
-
-	await Comment.deleteMany({ post: { $in: postIds } }, { session });
 	await Group.findByIdAndDelete(groupId, { session });
 };
 
+/**
+ * Handles deletion or transfer of groups when a user is deleted.
+ * @param {string|ObjectId} userId - The user ID
+ * @param {Object} session - Mongoose session
+ * @returns {Promise<void>}
+ */
 const handleUserGroupDeletion = async (userId, session) => {
 	// Handle groups created by the user
 	const groupsCreatedByUser = await Group.find({ creator: userId })
@@ -165,6 +193,17 @@ const handleUserGroupDeletion = async (userId, session) => {
 	);
 };
 
+/**
+ * Increments or decrements a numeric stat field for a group.
+ * @param {string|ObjectId} groupId - The group ID
+ * @param {string} statField - The stats field to update (e.g., 'stats.totalPosts')
+ * @param {number} [amount=1] - The amount to increment/decrement
+ * @returns {Promise<Object>} - The update result
+ */
+const updateGroupStat = async (groupId, statField, amount = 1) => {
+	return Group.findByIdAndUpdate(groupId, { $inc: { [statField]: amount } });
+};
+
 module.exports = {
 	shouldAllowOwnershipTransfer,
 	isGroupActiveEnough,
@@ -172,4 +211,5 @@ module.exports = {
 	transferGroupOwnership,
 	deleteGroupAndContent,
 	handleUserGroupDeletion,
+	updateGroupStat,
 };
