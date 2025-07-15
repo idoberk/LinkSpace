@@ -40,6 +40,9 @@ const SearchModal = ({ isOpen, onClose }) => {
       setLoading(true);
       setError(null);
 
+      // Check if server is reachable
+      console.log('API base URL:', api.defaults.baseURL);
+      
       // Build query parameters
       const params = new URLSearchParams();
       Object.keys(searchParams).forEach(key => {
@@ -48,11 +51,24 @@ const SearchModal = ({ isOpen, onClose }) => {
         }
       });
 
+      console.log('Searching with params:', params.toString());
+      console.log('Search URL:', `/users/search?${params.toString()}`);
+      
       const response = await api.get(`/users/search?${params.toString()}`);
+      console.log('Search response:', response.data);
+      
       setUsers(response.data.users || []);
     } catch (err) {
-      setError('Error searching users');
       console.error('Search error:', err);
+      console.error('Error response:', err.response);
+      
+      if (err.code === 'ERR_NETWORK') {
+        setError('Cannot connect to server. Please check if the server is running.');
+      } else if (err.response?.status === 404) {
+        setError('Search endpoint not found. Please check server configuration.');
+      } else {
+        setError('Error searching users');
+      }
     } finally {
       setLoading(false);
     }
@@ -160,6 +176,39 @@ const SearchModal = ({ isOpen, onClose }) => {
     onClose();
     // Navigate to the user's profile
     navigate(`/profile/${userId}`);
+  };
+
+  const handleAddFriend = async (userId, userName) => {
+    try {
+      console.log('Sending friend request to:', userName);
+      console.log('User ID:', userId);
+      console.log('Current user ID:', currentUserId);
+      
+      // Check if user is logged in
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No token found - user not logged in');
+        alert('You must be logged in to send friend requests');
+        return;
+      }
+      
+      const response = await api.post(`/users/${userId}/friend-request`);
+      console.log('Friend request response:', response);
+      console.log('Friend request sent successfully!');
+      alert(`Friend request sent to ${userName}!`);
+    } catch (err) {
+      console.error('Error sending friend request:', err);
+      console.error('Error response:', err.response);
+      
+      if (err.response?.status === 401) {
+        alert('You must be logged in to send friend requests');
+      } else if (err.response?.status === 400) {
+        const errorMessage = err.response.data?.errors?.message;
+        alert(errorMessage || 'Error sending friend request');
+      } else {
+        alert('Error sending friend request. Please try again.');
+      }
+    }
   };
 
 
@@ -343,6 +392,14 @@ const SearchModal = ({ isOpen, onClose }) => {
                       >
                         View Profile
                       </button>
+                      {user._id !== currentUserId && (
+                        <button 
+                          onClick={() => handleAddFriend(user._id, user.displayName)}
+                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                        >
+                          Add Friend
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}

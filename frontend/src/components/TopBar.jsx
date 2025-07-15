@@ -12,6 +12,7 @@ import DeleteAccountModal from './DeleteAccount';
 import SearchModal from './SearchModal';
 import { useUser } from '../hooks/useUser';
 
+
 // TODO: add a on click to the settings page
 // TODO: check that the delete account modal is working and delete the account from DB
 
@@ -221,13 +222,13 @@ const TopBar = () => {
 					/>
 				)}
 			</div>
-{/* 			
+			
 			<SearchModal 
 				isOpen={isSearchModalOpen} 
 				onClose={() => setIsSearchModalOpen(false)} 
 				searchResults={searchResults}
 				isSearching={isSearching}
-			/> */}
+			/>
 
 		</div>
 	);
