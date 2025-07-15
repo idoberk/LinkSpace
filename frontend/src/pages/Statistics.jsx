@@ -409,7 +409,7 @@ const Statistics = () => {
         </div>
         {/* General statistics */}
         {statistics && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
               <h3 className="text-lg font-semibold text-gray-700">Total Comments</h3>
               <p className="text-3xl font-bold text-blue-600">{statistics.totalComments}</p>
@@ -417,10 +417,6 @@ const Statistics = () => {
             <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
               <h3 className="text-lg font-semibold text-gray-700">Comments with Users</h3>
               <p className="text-3xl font-bold text-green-600">{statistics.commentsWithUsers}</p>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-              <h3 className="text-lg font-semibold text-gray-700">Anonymous Comments</h3>
-              <p className="text-3xl font-bold text-orange-600">{statistics.anonymousComments}</p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
               <h3 className="text-lg font-semibold text-gray-700">Active Users</h3>

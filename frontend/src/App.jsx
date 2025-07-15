@@ -38,6 +38,7 @@ const App = () => {
 				/>
 				<Route path='/home' element={<Home />} />
 				<Route path='/profile' element={<Profile />} />
+				<Route path='/profile/:userId' element={<Profile />} />
 				<Route path='/groups' element={<GroupsDisplay />} />
 				<Route path='/create-group' element={<CreateGroup />} />
 				<Route path='/statistics' element={<Statistics />} />

@@ -2,7 +2,7 @@ import TopBar from '../components/TopBar';
 import ProfilePicture from '../components/ProfilePicture';
 import Post from '../components/Post';
 import SubmitPostItem from '../components/SubmitPostItem';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import FeedButton from '../components/FeedButton';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +12,7 @@ import api from '../lib/axios';
 
 const Profile = () => {
 	const navigate = useNavigate();
+	const { userId } = useParams(); // Get userId from URL params
 	const userFromLocation =
 		useLocation().state?.user || JSON.parse(localStorage.getItem('user'));
 
@@ -19,11 +20,33 @@ const Profile = () => {
 	const [showMenu, setShowMenu] = useState(false);
 	const [uploading, setUploading] = useState(false);
 	const [uploadType, setUploadType] = useState(null);
+	const [loading, setLoading] = useState(false);
 	const menuRef = useRef(null);
 	const fileInputRef = useRef(null);
 
 	console.log(user);
 	const [posts, setPosts] = useState([]);
+
+	// Fetch user data if userId is provided in URL
+	useEffect(() => {
+		const fetchUserData = async () => {
+			if (userId && userId !== user?._id) {
+				setLoading(true);
+				try {
+					const response = await api.get(`/api/users/${userId}`);
+					setUser(response.data);
+				} catch (error) {
+					console.error('Error fetching user data:', error);
+					// If user not found, redirect to home
+					navigate('/home');
+				} finally {
+					setLoading(false);
+				}
+			}
+		};
+
+		fetchUserData();
+	}, [userId, user?._id, navigate]);
 
 	const fetchPosts = async () => {
 		try {
@@ -137,6 +160,24 @@ const Profile = () => {
 		}
 	};
 
+	// Show loading state
+	if (loading) {
+		return (
+			<div className='bg-white min-h-screen flex items-center justify-center'>
+				<div className='text-lg'>Loading profile...</div>
+			</div>
+		);
+	}
+
+	// Show error if no user data
+	if (!user) {
+		return (
+			<div className='bg-white min-h-screen flex items-center justify-center'>
+				<div className='text-lg text-red-600'>User not found</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className='bg-white min-h-screen'>
 			<TopBar user={user} />
@@ -168,31 +209,34 @@ const Profile = () => {
 						width={250}
 						height={250}
 					/>
-					<div
-						className='absolute left-1/2 bottom-0 transform -translate-x-1/2 translate-y-2\3'
-						ref={menuRef}>
-						<FeedButton
-							className='px-4 py-2 rounded-full'
-							onClick={() => setShowMenu(!showMenu)}
-							disabled={uploading}>
-							{uploading ? '...' : '+'}
-						</FeedButton>
-						{showMenu && (
-							<div className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[200px] z-10'>
-								<button
-									onClick={handleAddProfilePicture}
-									className='w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2'>
-									<span>Add profile picture</span>
-								</button>
-								<hr className='w-full border-gray-200' />
-								<button
-									onClick={handleAddCoverPhoto}
-									className='w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2'>
-									<span>Add cover photo</span>
-								</button>
-							</div>
-						)}
-					</div>
+					{/* Only show edit menu if viewing own profile */}
+					{!userId || userId === JSON.parse(localStorage.getItem('user'))?._id ? (
+						<div
+							className='absolute left-1/2 bottom-0 transform -translate-x-1/2 translate-y-2\3'
+							ref={menuRef}>
+							<FeedButton
+								className='px-4 py-2 rounded-full'
+								onClick={() => setShowMenu(!showMenu)}
+								disabled={uploading}>
+								{uploading ? '...' : '+'}
+							</FeedButton>
+							{showMenu && (
+								<div className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[200px] z-10'>
+									<button
+										onClick={handleAddProfilePicture}
+										className='w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2'>
+										<span>Add profile picture</span>
+									</button>
+									<hr className='w-full border-gray-200' />
+									<button
+										onClick={handleAddCoverPhoto}
+										className='w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2'>
+										<span>Add cover photo</span>
+									</button>
+								</div>
+							)}
+						</div>
+					) : null}
 				</div>
 			</div>
 			<input
@@ -222,9 +266,12 @@ const Profile = () => {
 			</div>
 			<hr className='w-full my-4 border-gray-200' />
 			<div className='h-screen w-4/5 mx-auto'>
-				<div className='flex justify-center items-center'>
-					<SubmitPostItem onPostSubmit={handlePostSubmit} />
-				</div>
+				{/* Only show post creation if viewing own profile */}
+				{(!userId || userId === JSON.parse(localStorage.getItem('user'))?._id) && (
+					<div className='flex justify-center items-center'>
+						<SubmitPostItem onPostSubmit={handlePostSubmit} />
+					</div>
+				)}
 				{posts
 					.filter((post) => post.author._id === user._id)
 					.map((post) => (

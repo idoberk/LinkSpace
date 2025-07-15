@@ -36,8 +36,15 @@ const getAllUsers = async (req, res) => {
 			.skip(skip);
 
 		const usersWithDisplayName = users.map((user) => ({
-			...user.toObject(),
-			displayName: user.profile.fullName,
+			_id: user._id,
+			displayName: `${user.profile.firstName} ${user.profile.lastName}`,
+			profile: {
+				firstName: user.profile.firstName,
+				lastName: user.profile.lastName,
+				avatar: user.profile.avatar?.url || user.profile.avatar,
+				address: user.profile.address,
+			},
+			createdAt: user.createdAt,
 		}));
 
 		const total = await User.countDocuments(query);
@@ -77,44 +84,51 @@ const getUserById = async (req, res) => {
 
 const searchUser = async (req, res) => {
 	try {
-		const {
-			firstName,
-			lastName,
-			city,
-			joinedAfter,
-			joinedBefore,
-			page = 1,
-			limit = 10,
-		} = req.query;
+			const {
+		firstName,
+		lastName,
+		joinedAfter,
+		joinedBefore,
+		joinedFrom,
+		joinedTo,
+		page = 1,
+		limit = 10,
+	} = req.query;
 		const skip = (page - 1) * limit;
 		let query = {};
 
-		if (firstName) {
-			query['profile.firstName'] = { $regex: firstName, $options: 'i' };
-		}
-		if (lastName) {
-			query['profile.lastName'] = { $regex: lastName, $options: 'i' };
-		}
-		if (city) {
+		// Handle both old and new date parameter names
+		const fromDate = joinedFrom || joinedAfter;
+		const toDate = joinedTo || joinedBefore;
+
+		if (firstName && lastName) {
+			// If both firstName and lastName are provided, search for both
 			query.$and = [
-				{ 'profile.address': { $regex: city, $options: 'i' } },
-				{ 'settings.privacy.locationInfo': { $ne: 'private' } },
+				{ 'profile.firstName': { $regex: `^${firstName}`, $options: 'i' } },
+				{ 'profile.lastName': { $regex: `^${lastName}`, $options: 'i' } }
 			];
+		} else if (firstName) {
+			// Search in firstName only - use start-of-string matching for better incremental search
+			query['profile.firstName'] = { $regex: `^${firstName}`, $options: 'i' };
+		} else if (lastName) {
+			// Search in lastName only - use start-of-string matching for better incremental search
+			query['profile.lastName'] = { $regex: `^${lastName}`, $options: 'i' };
 		}
-		if (joinedAfter || joinedBefore) {
+		
+		if (fromDate || toDate) {
 			query.createdAt = {};
 
-			if (joinedAfter) {
-				query.createdAt.$gte = new Date(joinedAfter);
+			if (fromDate) {
+				query.createdAt.$gte = new Date(fromDate);
 			}
-			if (joinedBefore) {
-				query.createdAt.$lte = new Date(joinedBefore);
+			if (toDate) {
+				query.createdAt.$lte = new Date(toDate);
 			}
 		}
 
 		const users = await User.find(query)
 			.select(
-				'profile.firstName profile.lastName profile.avatar profile.address settings.privacy.locationInfo createdAt',
+				'profile.firstName profile.lastName profile.avatar profile.address settings.privacy.locationInfo createdAt username',
 			)
 			.sort({ createdAt: -1 })
 			.limit(parseInt(limit))
@@ -123,25 +137,24 @@ const searchUser = async (req, res) => {
 		const viewerId = req.user?.userId;
 		const foundUsers = users.map((user) => {
 			const userObj = user.toObject();
-			const isFriend = viewerId && user.isFriendsWith(viewerId);
+			const isFriend = viewerId && user.isFriendsWith ? user.isFriendsWith(viewerId) : false;
 			const isOwner = viewerId === user._id.toString();
 
 			const result = {
 				_id: user._id,
+				username: user.username,
 				displayName: user.profile.fullName,
 				profile: {
 					firstName: user.profile.firstName,
 					lastName: user.profile.lastName,
-					avatar: user.profile.avatar,
+					avatar: user.profile.avatar?.url || user.profile.avatar,
 				},
 				createdAt: user.createdAt,
 			};
 
+			// For public search, only show location if it's public
 			const canViewLocation =
-				isOwner ||
-				userObj.settings.privacy.locationInfo === 'public' ||
-				(userObj.settings.privacy.locationInfo === 'friends' &&
-					isFriend);
+				userObj.settings?.privacy?.locationInfo === 'public';
 
 			if (canViewLocation && userObj.profile.address) {
 				result.profile.address = userObj.profile.address;
@@ -290,6 +303,8 @@ const rejectFriendRequest = async (req, res) => {
 		res.status(errors.status || 500).json({ errors });
 	}
 };
+
+
 
 const removeFriend = async (req, res) => {
 	try {

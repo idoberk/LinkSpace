@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import api from '../lib/axios';
 import { useState, useEffect, useRef } from 'react';
 import DeleteAccountModal from './DeleteAccount';
+import SearchModal from './SearchModal';
 
 // TODO: add a on click to the settings page
 // TODO: check that the delete account modal is working and delete the account from DB
@@ -19,6 +20,11 @@ const TopBar = ({ user }) => {
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [deletePassword, setDeletePassword] = useState('');
 	const [deleting, setDeleting] = useState(false);
+	const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+	const [searchResults, setSearchResults] = useState([]);
+	const [searchQuery, setSearchQuery] = useState('');
+	const [isSearching, setIsSearching] = useState(false);
+	const searchTimeoutRef = useRef(null);
 
 	const handleLogout = async () => {
 		try {
@@ -69,6 +75,46 @@ const TopBar = ({ user }) => {
 		}
 	};
 
+	const handleSearch = async (query) => {
+		if (!query.trim()) {
+			setSearchResults([]);
+			return;
+		}
+
+		try {
+			setIsSearching(true);
+			// Use firstName parameter for the main search input to support incremental search
+			const response = await api.get(`/api/users/search?firstName=${encodeURIComponent(query.trim())}`);
+			setSearchResults(response.data.users || []);
+		} catch (error) {
+			console.error('Search error:', error);
+			setSearchResults([]);
+		} finally {
+			setIsSearching(false);
+		}
+	};
+
+	const handleSearchInputChange = (e) => {
+		const query = e.target.value;
+		setSearchQuery(query);
+		
+		// Clear previous timeout
+		if (searchTimeoutRef.current) {
+			clearTimeout(searchTimeoutRef.current);
+		}
+		
+		// If query is empty, clear results immediately
+		if (!query.trim()) {
+			setSearchResults([]);
+			return;
+		}
+		
+		// Set new timeout for debounced search
+		searchTimeoutRef.current = setTimeout(() => {
+			handleSearch(query);
+		}, 200); // Reduced delay for more responsive incremental search
+	};
+
 	return (
 		<div className='top-bar-container z-50 fixed top-0 left-0 bg-gradient-to-br from-blue-50 to-indigo-100 flex justify-between items-center p-4 w-full h-16'>
 			<span className='top-bar-left'>
@@ -84,13 +130,17 @@ const TopBar = ({ user }) => {
 				<span className='search-bar flex justify-start items-center bg-white rounded-full p-2 w-80'>
 					<SearchOutlinedIcon className='ml-2' />
 					<input
-						className='ml-2 bg-transparent outline-none'
+						className='ml-2 bg-transparent outline-none cursor-pointer'
 						type='text'
-						placeholder='Search'
+						placeholder='Search users...'
+						onClick={() => setIsSearchModalOpen(true)}
+						readOnly
+						value={searchQuery}
+						onChange={handleSearchInputChange}
 					/>
 				</span>
 			</span>
-			<div className='top-bar-right flex justify-center items-center'>
+			<div className='top-bar-right flex justify-center items-center gap-4'>
 				<span className='mr-3 font-bold text-gray-800 text-xl self-center'>
 					{user?.profile?.firstName} {user?.profile?.lastName}
 				</span>
@@ -133,6 +183,11 @@ const TopBar = ({ user }) => {
 					}}>
 					Logout
 				</FeedButton>
+				<Link
+					to='/statistics'
+					className='px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors'>
+					Statistics
+				</Link>
 
 				{showDeleteModal && (
 					<DeleteAccountModal
@@ -144,13 +199,13 @@ const TopBar = ({ user }) => {
 					/>
 				)}
 			</div>
-			<div className='top-bar-right'>
-				<Link
-					to='/statistics'
-					className='px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors'>
-					Statistics
-				</Link>
-			</div>
+			
+			<SearchModal 
+				isOpen={isSearchModalOpen} 
+				onClose={() => setIsSearchModalOpen(false)} 
+				searchResults={searchResults}
+				isSearching={isSearching}
+			/>
 		</div>
 	);
 };
