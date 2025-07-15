@@ -8,6 +8,9 @@ const {
 	canDeleteComment,
 } = require('../middleware/commentMiddleware');
 
+// Get all comments for statistics (no authentication required)
+router.get('/', commentController.getAllComments);
+
 router.get(
 	'/post/:id',
 	authenticate,

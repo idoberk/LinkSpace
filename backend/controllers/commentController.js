@@ -228,6 +228,23 @@ const getComment = async (req, res) => {
 	}
 };
 
+const getAllComments = async (req, res) => {
+	try {
+		const comments = await Comment.find({ isDeleted: { $ne: true } })
+			.populate('author', 'email profile.firstName profile.lastName profile.avatar')
+			.populate('post', 'title')
+			.populate('parentComment', 'content')
+			.sort({ createdAt: -1 });
+
+		res.json({
+			comments: comments.map(comment => comment.toObject())
+		});
+	} catch (error) {
+		const errors = handleErrors(error);
+		res.status(errors.status).json({ errors });
+	}
+};
+
 module.exports = {
 	createComment,
 	updateComment,
@@ -235,4 +252,5 @@ module.exports = {
 	likeComment,
 	getPostComments,
 	getComment,
+	getAllComments,
 };

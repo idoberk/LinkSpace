@@ -3,6 +3,7 @@
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './pages/Home';
+import Statistics from './pages/Statistics';
 import WelcomePage from './pages/WelcomePage';
 import {
 	BrowserRouter as Router,
@@ -33,6 +34,7 @@ const App = () => {
 					}
 				/>
 				<Route path='/home' element={<Home />} />
+				<Route path='/statistics' element={<Statistics />} />
 			</Routes>
 		</Router>
 	);
