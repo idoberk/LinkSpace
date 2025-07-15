@@ -3,16 +3,10 @@ import GroupsDisplay from '../components/GroupsDisplay';
 import TopBar from '../components/TopBar';
 import SideBar from '../components/SideBar';
 import Feed from '../components/Feed';
-import { useState } from 'react';
-import FriendsRequest from '../components/FriendsRequest';
+import { useUser } from '../hooks/useUser';
 
 const Home = () => {
-	const [user] = useState(() => {
-		const storedUser = localStorage.getItem('user');
-		return storedUser ? JSON.parse(storedUser) : null;
-	});
-
-	console.log(user);
+	const { user } = useUser();
 
 	return (
 		<div className='bg-white min-h-screen'>

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import api from '../lib/axios';
 import FeedButton from './FeedButton';
+import { useUser } from '../hooks/useUser';
 
 const FriendsRequest = () => {
-	const user = JSON.parse(localStorage.getItem('user'));
+	const { user } = useUser();
 	const [requestIds] = useState(user?.friendRequests?.received || []);
 	const [friendRequests, setFriendRequests] = useState([]);
 	const [loading, setLoading] = useState(false);

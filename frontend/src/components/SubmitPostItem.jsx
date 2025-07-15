@@ -4,6 +4,7 @@ import SmartDisplayOutlinedIcon from '@mui/icons-material/SmartDisplayOutlined';
 import PhotoSizeSelectActualOutlinedIcon from '@mui/icons-material/PhotoSizeSelectActualOutlined';
 import { useState } from 'react';
 import api from '../lib/axios';
+import { useUser } from '../hooks/useUser';
 
 // TODO: Upload media to the post
 
@@ -11,6 +12,7 @@ const SubmitPostItem = ({ onPostSubmit }) => {
 	const [content, setContent] = useState('');
 	// const [media, setMedia] = useState([]);
 	const [tags, setTags] = useState([]);
+	const { user } = useUser();
 
 	const handleUploadPost = async (e) => {
 		e.preventDefault();
@@ -47,8 +49,7 @@ const SubmitPostItem = ({ onPostSubmit }) => {
 				<ProfilePicture
 					width={50}
 					height={50}
-					picture='https://fastly.picsum.photos/id/58/1280/853.jpg?hmac=YO3QnOm9TpyM5DqsJjoM4CHg8oIq4cMWLpd9ALoP908'
-					// picture={user?.profile?.avatar || undefined}
+					picture={user?.profile?.avatar?.url}
 				/>
 				<input
 					className=' w-full p-2 rounded-2xl h-20 border-transparent focus:outline-none text-2xl '

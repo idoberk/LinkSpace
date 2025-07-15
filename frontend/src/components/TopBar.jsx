@@ -1,42 +1,47 @@
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined';
 import SettingsSuggestRoundedIcon from '@mui/icons-material/SettingsSuggestRounded';
-import ProfilePicture from './ProfilePicture';
-import FeedButton from './FeedButton';
-import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
 import api from '../lib/axios';
-import { useState, useEffect, useRef } from 'react';
+import FeedButton from './FeedButton';
+import ProfilePicture from './ProfilePicture';
 import DeleteAccountModal from './DeleteAccount';
+<<<<<<< HEAD
 import SearchModal from './SearchModal';
+=======
+import { useUser } from '../hooks/useUser';
+>>>>>>> 142e6ab1b85b612ca5cedbf32f59bd5602b9cb90
 
 // TODO: add a on click to the settings page
 // TODO: check that the delete account modal is working and delete the account from DB
 
-const TopBar = ({ user }) => {
+const TopBar = () => {
 	const navigate = useNavigate();
+	const { user, logout } = useUser();
 	const [showSettingsMenu, setShowSettingsMenu] = useState(false);
 	const settingMenuRef = useRef(null);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
-	const [deletePassword, setDeletePassword] = useState('');
 	const [deleting, setDeleting] = useState(false);
+<<<<<<< HEAD
 	const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 	const [searchResults, setSearchResults] = useState([]);
 	const [searchQuery, setSearchQuery] = useState('');
 	const [isSearching, setIsSearching] = useState(false);
 	const searchTimeoutRef = useRef(null);
+=======
+	const [deleteError, setDeleteError] = useState('');
+>>>>>>> 142e6ab1b85b612ca5cedbf32f59bd5602b9cb90
 
 	const handleLogout = async () => {
 		try {
 			await api.post('/account/logout');
-			console.log('Backend logout successful');
 		} catch (error) {
 			console.error('Backend logout failed:', error);
 		}
 
-		// Clear frontend storage
-		localStorage.removeItem('token');
-		localStorage.removeItem('user');
+		logout();
 		navigate('/login');
 	};
 
@@ -57,24 +62,30 @@ const TopBar = ({ user }) => {
 		};
 	}, []);
 
-	const handleDeleteAccount = async () => {
+	const handleDeleteAccount = async (password) => {
+		setDeleteError('');
 		try {
 			setDeleting(true);
-			await api.post('/account/delete', { password: deletePassword });
+			await api.delete('/account/', {
+				data: { password },
+			});
 			alert('Your account has been deleted');
+			setShowDeleteModal(false); // Only close on success
+			logout();
 			navigate('/login');
 		} catch (err) {
 			console.error('Error deleting account:', err);
-			alert(
+			setDeleteError(
 				err?.response?.data?.errors?.message ||
 					'Failed to delete account',
 			);
+			// Do NOT close the modal on error
 		} finally {
 			setDeleting(false);
-			setShowDeleteModal(false);
 		}
 	};
 
+<<<<<<< HEAD
 	const handleSearch = async (query) => {
 		if (!query.trim()) {
 			setSearchResults([]);
@@ -113,18 +124,23 @@ const TopBar = ({ user }) => {
 		searchTimeoutRef.current = setTimeout(() => {
 			handleSearch(query);
 		}, 200); // Reduced delay for more responsive incremental search
+=======
+	const handleCancelDelete = () => {
+		setShowDeleteModal(false);
+		setDeleteError('');
+>>>>>>> 142e6ab1b85b612ca5cedbf32f59bd5602b9cb90
 	};
 
 	return (
 		<div className='top-bar-container z-50 fixed top-0 left-0 bg-gradient-to-br from-blue-50 to-indigo-100 flex justify-between items-center p-4 w-full h-16'>
 			<span className='top-bar-left'>
-				<span
-					className='text-2xl font-bold text-gray-800 mb-2'
-					style={{
-						textShadow: '3px 3px 1px rgba(50,50,50,0.3)',
-					}}>
+				<Link
+					to='/home'
+					className='text-2xl font-bold text-gray-800 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-400 rounded transition-shadow duration-200'
+					style={{ textShadow: '3px 3px 1px rgba(50,50,50,0.3)' }}
+					aria-label='Go to home page'>
 					LinkSpace
-				</span>
+				</Link>
 			</span>
 			<span className='top-bar-center'>
 				<span className='search-bar flex justify-start items-center bg-white rounded-full p-2 w-80'>
@@ -147,7 +163,7 @@ const TopBar = ({ user }) => {
 				<ProfilePicture
 					width={50}
 					height={50}
-					picture={user?.profile?.avatar}
+					picture={user?.profile?.avatar?.url}
 				/>
 				<div ref={settingMenuRef}>
 					{/* <ProfilePicture picture={user?.profile.picture} /> */}
@@ -157,14 +173,27 @@ const TopBar = ({ user }) => {
 					/>
 					{showSettingsMenu && (
 						<div className='absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[200px] z-10'>
-							<button className='w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2'>
+							<button
+								onClick={() => {
+									setShowSettingsMenu(false);
+									navigate('/profile', {
+										state: { editMode: 'inline' },
+									});
+								}}
+								className='w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2'>
 								<span>Edit Profile</span>
 							</button>
 							<hr className='w-full border-gray-200' />
-							<button className='w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2'>
+							<button
+								onClick={() => {
+									setShowSettingsMenu(false);
+									navigate('/profile', {
+										state: { editMode: 'settings' },
+									});
+								}}
+								className='w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2'>
 								<span>Privacy Settings</span>
 							</button>
-
 							<hr className='w-full border-gray-200' />
 							<button
 								className='w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2 text-red-600'
@@ -191,14 +220,14 @@ const TopBar = ({ user }) => {
 
 				{showDeleteModal && (
 					<DeleteAccountModal
-						password={deletePassword}
-						setPassword={setDeletePassword}
 						deleting={deleting}
-						onCancel={() => setShowDeleteModal(false)}
+						onCancel={handleCancelDelete}
 						onDelete={handleDeleteAccount}
+						error={deleteError}
 					/>
 				)}
 			</div>
+<<<<<<< HEAD
 			
 			<SearchModal 
 				isOpen={isSearchModalOpen} 
@@ -206,6 +235,8 @@ const TopBar = ({ user }) => {
 				searchResults={searchResults}
 				isSearching={isSearching}
 			/>
+=======
+>>>>>>> 142e6ab1b85b612ca5cedbf32f59bd5602b9cb90
 		</div>
 	);
 };

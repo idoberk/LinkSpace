@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import TopBar from '../components/TopBar';
 import ProfilePicture from '../components/ProfilePicture';
 import Post from '../components/Post';
@@ -6,17 +7,36 @@ import { useLocation, useParams } from 'react-router-dom';
 import FeedButton from '../components/FeedButton';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+=======
+import { useEffect, useRef, useState } from 'react';
+>>>>>>> 142e6ab1b85b612ca5cedbf32f59bd5602b9cb90
 import api from '../lib/axios';
+import Post from '../components/Post';
+import TopBar from '../components/TopBar';
+import { useUser } from '../hooks/useUser';
+import FeedButton from '../components/FeedButton';
+import ProfilePicture from '../components/ProfilePicture';
+import SubmitPostItem from '../components/SubmitPostItem';
+import ProfileEditForm from '../components/ProfileEditForm';
+import ProfileSettingsForm from '../components/ProfileSettingsForm';
+import ChangePasswordForm from '../components/ChangePasswordForm';
+import AlertMessage from '../components/AlertMessage';
+import { useLocation } from 'react-router-dom';
+import { formatDate } from '../utils/timeFormatting';
 
 // TODO: Add to the backend the birthdate to the public profile
 
 const Profile = () => {
+<<<<<<< HEAD
 	const navigate = useNavigate();
 	const { userId } = useParams(); // Get userId from URL params
 	const userFromLocation =
 		useLocation().state?.user || JSON.parse(localStorage.getItem('user'));
 
 	const [user, setUser] = useState(userFromLocation);
+=======
+	const { user, setUser } = useUser();
+>>>>>>> 142e6ab1b85b612ca5cedbf32f59bd5602b9cb90
 	const [showMenu, setShowMenu] = useState(false);
 	const [uploading, setUploading] = useState(false);
 	const [uploadType, setUploadType] = useState(null);
@@ -24,8 +44,18 @@ const Profile = () => {
 	const menuRef = useRef(null);
 	const fileInputRef = useRef(null);
 
-	console.log(user);
 	const [posts, setPosts] = useState([]);
+	const location = useLocation();
+	const [editMode, setEditMode] = useState(null); // 'inline', 'settings', 'password', null
+	const [alert, setAlert] = useState(null);
+
+	// Set editMode from navigation state on mount
+	useEffect(() => {
+		if (location.state && location.state.editMode) {
+			setEditMode(location.state.editMode);
+		}
+		// eslint-disable-next-line
+	}, []);
 
 	// Fetch user data if userId is provided in URL
 	useEffect(() => {
@@ -82,14 +112,12 @@ const Profile = () => {
 		setUploadType('avatar');
 		setShowMenu(false);
 		fileInputRef.current.click();
-		console.log('Add profile picture clicked');
 	};
 
 	const handleAddCoverPhoto = () => {
 		setUploadType('coverPhoto');
 		setShowMenu(false);
 		fileInputRef.current.click();
-		console.log('Add cover photo clicked');
 	};
 
 	const handleFileChange = async (e) => {
@@ -100,63 +128,44 @@ const Profile = () => {
 		formData.append('file', file);
 		formData.append('type', uploadType);
 
+		if (uploadType === 'avatar') {
+			formData.append('folder', `linkspace/users/${user._id}/profile`);
+		} else if (uploadType === 'coverPhoto') {
+			formData.append('folder', `linkspace/users/${user._id}/cover`);
+		}
+
 		try {
-			const res = await api.post('/upload/single', formData, {
-				headers: {
-					'Content-Type': 'multipart/form-data',
-				},
+			// 1. Upload the file and get the URL
+			const uploadRes = await api.post('/upload/single', formData, {
+				headers: { 'Content-Type': 'multipart/form-data' },
 			});
-
-			const data = res.data;
-
-			// update the picture of the user
-			const imageUrl = data.media?.url || data.url;
+			const imageUrl = uploadRes.data.media?.url || uploadRes.data.url;
+			const publicId =
+				uploadRes.data.media?.publicId || uploadRes.data.publicId;
 			const fieldName =
 				uploadType === 'coverPhoto' ? 'coverImage' : 'avatar';
 
-			setUser((prev) => ({
-				...prev,
+			// 2. Update the profile with the new image URL
+			await api.put('/account/profile', {
 				profile: {
-					...prev.profile,
-					[fieldName]: {
-						url: imageUrl,
-						publicId: data.media?.publicId || data.publicId,
-					},
+					...user.profile,
+					[fieldName]: { url: imageUrl, publicId },
 				},
-			}));
+			});
 
-			// update the localStorage
-			localStorage.setItem(
-				'user',
-				JSON.stringify({
-					...user,
-					profile: {
-						...user.profile,
-						[fieldName]: imageUrl,
-					},
-				}),
-			);
-
-			// update the profile in the server
-			try {
-				await api.put('/account/profile', {
-					profile: {
-						[fieldName]: {
-							url: imageUrl,
-							publicId: data.media?.publicId || data.publicId,
-						},
-					},
-				});
-			} catch (updateError) {
-				console.warn('Error updating profile in server:', updateError);
-			}
+			// 3. Fetch the latest user profile from the backend
+			const profileRes = await api.get('/account/profile');
+			setUser(profileRes.data);
 		} catch (error) {
-			console.error('Upload error details:', error);
-			alert('Error uploading file: ' + error.message);
+			console.error('Upload or update error:', error);
+			alert(
+				'Error uploading file: ' +
+					(error?.response?.data?.message || error.message),
+			);
 		} finally {
 			setUploading(false);
 			setUploadType(null);
-			e.target.value = null; // reset the input to allow uploading the same file again if wanted
+			e.target.value = null;
 		}
 	};
 
@@ -180,7 +189,7 @@ const Profile = () => {
 
 	return (
 		<div className='bg-white min-h-screen'>
-			<TopBar user={user} />
+			<TopBar />
 			<div className='relative w-full h-100 rounded-b-lg'>
 				<div
 					className='overflow-hidden h-full w-full'
@@ -251,6 +260,65 @@ const Profile = () => {
 				<h1 className='text-2xl font-bold '>
 					{user?.profile?.firstName} {user?.profile?.lastName}
 				</h1>
+				<div className='flex gap-2 mt-4'>
+					<button
+						className={`px-4 py-2 rounded ${
+							editMode === 'inline'
+								? 'bg-blue-600 text-white'
+								: 'bg-gray-200 text-gray-700'
+						}`}
+						onClick={() =>
+							setEditMode(editMode === 'inline' ? null : 'inline')
+						}>
+						Edit Inline
+					</button>
+					<button
+						className={`px-4 py-2 rounded ${
+							editMode === 'settings'
+								? 'bg-blue-600 text-white'
+								: 'bg-gray-200 text-gray-700'
+						}`}
+						onClick={() =>
+							setEditMode(
+								editMode === 'settings' ? null : 'settings',
+							)
+						}>
+						Settings
+					</button>
+					<button
+						className={`px-4 py-2 rounded ${
+							editMode === 'password'
+								? 'bg-blue-600 text-white'
+								: 'bg-gray-200 text-gray-700'
+						}`}
+						onClick={() =>
+							setEditMode(
+								editMode === 'password' ? null : 'password',
+							)
+						}>
+						Change Password
+					</button>
+				</div>
+				{alert && (
+					<AlertMessage
+						type={alert.type}
+						message={alert.message}
+						onClose={() => setAlert(null)}
+					/>
+				)}
+				<div className='w-full max-w-lg mt-4'>
+					{editMode === 'inline' && (
+						<ProfileEditForm onClose={() => setEditMode(null)} />
+					)}
+					{editMode === 'settings' && (
+						<ProfileSettingsForm
+							onClose={() => setEditMode(null)}
+						/>
+					)}
+					{editMode === 'password' && (
+						<ChangePasswordForm onClose={() => setEditMode(null)} />
+					)}
+				</div>
 			</div>
 			<hr className='w-full my-4 border-gray-200' />
 			<div className='flex flex-col gap-1 ml-2'>
@@ -261,7 +329,9 @@ const Profile = () => {
 					{user?.profile?.address || 'No address'}
 				</h2>
 				<h2 className='text-lg text-gray-500'>
-					{user?.profile?.birthDate || ''}
+					{user?.profile?.birthDate
+						? formatDate(user.profile.birthDate)
+						: ''}
 				</h2>
 			</div>
 			<hr className='w-full my-4 border-gray-200' />
@@ -282,11 +352,6 @@ const Profile = () => {
 						/>
 					))}
 			</div>
-			<FeedButton
-				className='fixed bottom-6 right-4 z-50'
-				onClick={() => navigate('/home')}>
-				Return to Home Page
-			</FeedButton>
 		</div>
 	);
 };

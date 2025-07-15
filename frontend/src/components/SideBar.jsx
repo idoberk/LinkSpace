@@ -8,9 +8,11 @@ import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
 
 import { useNavigate } from 'react-router-dom';
 import FriendsRequest from './FriendsRequest';
+import { useUser } from '../hooks/useUser';
 
-const SideBar = ({ user }) => {
+const SideBar = () => {
 	const navigate = useNavigate();
+	const { user } = useUser();
 	return (
 		<div className='flex flex-col h-screen'>
 			<SideBarItem icon={<RoofingOutlinedIcon />} text='Feed' />
