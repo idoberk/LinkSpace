@@ -232,21 +232,7 @@ const updateUser = async (req, res) => {
 		}
 
 		if (profile) {
-			if (profile.firstName !== undefined) {
-				user.profile.firstName = profile.firstName;
-			}
-			if (profile.lastName !== undefined) {
-				user.profile.lastName = profile.lastName;
-			}
-			if (profile.birthDate !== undefined) {
-				user.profile.birthDate = profile.birthDate;
-			}
-			if (profile.bio !== undefined) {
-				user.profile.bio = profile.bio;
-			}
-			if (profile.address !== undefined) {
-				user.profile.address = profile.address;
-			}
+			user.profile = { ...user.profile, ...profile };
 		}
 
 		if (settings) {
