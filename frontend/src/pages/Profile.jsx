@@ -22,6 +22,7 @@ const Profile = () => {
 	const [uploadType, setUploadType] = useState(null);
 	const menuRef = useRef(null);
 	const fileInputRef = useRef(null);
+	console.log({ user });
 
 	const [posts, setPosts] = useState([]);
 	const location = useLocation();

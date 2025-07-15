@@ -1,15 +1,18 @@
 import FeedButton from './FeedButton';
 import TopBar from './TopBar';
 import { useNavigate } from 'react-router-dom';
-<<<<<<< HEAD
+
 import { useState } from 'react';
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import api from '../lib/axios';
+import { useUser } from '../hooks/useUser';
 import CreateGroup from './CreateGroup';
 
 const GroupsDisplay = () => {
 	const navigate = useNavigate();
-	const user = JSON.parse(localStorage.getItem('user'));
+	// const user = JSON.parse(localStorage.getItem('user'));
+
+	const { user } = useUser();
 	const myGroups = user?.groups || [];
 	// const location = useLocation();
 
@@ -78,13 +81,12 @@ const GroupsDisplay = () => {
 	// 		navigate(location.pathname, { replace: true });
 	// 	}
 	// }, [location, navigate]);
-=======
-import { useUser } from '../hooks/useUser';
 
-const GroupsDisplay = () => {
-	const navigate = useNavigate();
-	const { user } = useUser();
->>>>>>> 142e6ab1b85b612ca5cedbf32f59bd5602b9cb90
+	// import { useUser } from '../hooks/useUser';
+
+	// const GroupsDisplay = () => {
+	// const navigate = useNavigate();
+	// const { user } = useUser();
 
 	return (
 		<div className='min-h-screen'>
@@ -216,15 +218,12 @@ const GroupsDisplay = () => {
 					</div>
 				</div>
 			</div>
-<<<<<<< HEAD
 
-			<FeedButton
-				className='fixed bottom-6 right-4 z-50'
-				onClick={() => navigate('/home')}>
-				Return to Home Page
-			</FeedButton>
-=======
->>>>>>> 142e6ab1b85b612ca5cedbf32f59bd5602b9cb90
+			{/* // <FeedButton
+			// 	className='fixed bottom-6 right-4 z-50'
+			// 	onClick={() => navigate('/home')}>
+			// 	Return to Home Page
+			// </FeedButton> */}
 		</div>
 	);
 };

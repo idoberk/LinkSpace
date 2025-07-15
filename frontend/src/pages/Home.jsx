@@ -7,7 +7,7 @@ import { useUser } from '../hooks/useUser';
 
 const Home = () => {
 	const { user } = useUser();
-
+	console.log({ user });
 	return (
 		<div className='bg-white min-h-screen'>
 			<TopBar user={user} />
@@ -16,7 +16,6 @@ const Home = () => {
 				{/* Left sidebar */}
 				<div className='w-1/5 flex flex-col h-full overflow-y-auto'>
 					<SideBar user={user} />
-					{/* <FriendsRequest /> */}
 				</div>
 
 				{/* Main feed */}

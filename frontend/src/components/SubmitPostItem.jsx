@@ -2,7 +2,7 @@ import FeedButton from './FeedButton';
 import ProfilePicture from './ProfilePicture';
 import SmartDisplayOutlinedIcon from '@mui/icons-material/SmartDisplayOutlined';
 import PhotoSizeSelectActualOutlinedIcon from '@mui/icons-material/PhotoSizeSelectActualOutlined';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import api from '../lib/axios';
 import { useUser } from '../hooks/useUser';
 
@@ -10,25 +10,54 @@ import { useUser } from '../hooks/useUser';
 
 const SubmitPostItem = ({ onPostSubmit }) => {
 	const [content, setContent] = useState('');
-	// const [media, setMedia] = useState([]);
+	const [media, setMedia] = useState([]);
 	const [tags, setTags] = useState([]);
+	const [tagsInput, setTagsInput] = useState('');
 	const { user } = useUser();
+	const fileInputRef = useRef();
+
+	const cleanForm = async () => {
+		setContent('');
+		// setMedia([]);
+		setTags([]);
+		setTagsInput('');
+	};
+
+	const handleIconClick = () => {
+		fileInputRef.current.click();
+	};
+
+	const handleMediaChange = (e) => {
+		setMedia(e.target.files[0]);
+	};
+
+	const handleTagsChange = (e) => {
+		setTagsInput(e.target.value);
+		const tagsArray = e.target.value
+			.split(',')
+			.map((tag) => tag.trim())
+			.filter((tag) => tag.length > 0);
+		setTags(tagsArray);
+	};
 
 	const handleUploadPost = async (e) => {
 		e.preventDefault();
-
-		const cleanForm = async () => {
-			setContent('');
-			// setMedia([]);
-			setTags([]);
-		};
-
 		if (!content.trim()) return;
+		const formData = new FormData();
+		formData.append('content', content);
+		formData.append('tags', tags.join(','));
+		if (media) formData.append('media', media);
+
 		try {
-			await api.post('/posts', {
-				content,
-				tags,
+			await api.post('/posts', formData, {
+				headers: { 'Content-Type': 'multipart/form-data' },
 			});
+			// if (!content.trim()) return;
+			// try {
+			// 	await api.post('/posts', {
+			// 		content,
+			// 		tags,
+			// 	});
 			cleanForm();
 			if (onPostSubmit) onPostSubmit();
 		} catch (error) {
@@ -59,15 +88,43 @@ const SubmitPostItem = ({ onPostSubmit }) => {
 					onChange={(e) => setContent(e.target.value)}
 				/>
 			</div>
+			<hr className='w-full border-gray-200 mb-3 ' />
+			<div className='w-full'>
+				<h1 className='text-md text-gray-600 w-full'>Tags</h1>
+				<input
+					className='w-full'
+					type='text'
+					value={tagsInput}
+					onChange={handleTagsChange}
+					placeholder='Put your tags with a comma between them'
+				/>
+				<div>
+					{tags.map((tag, idx) => (
+						<span
+							key={idx}
+							style={{ marginRight: 5, color: 'purple' }}>
+							#{tag}
+						</span>
+					))}
+				</div>
+			</div>
 			<hr className='w-full border-gray-200 mb-3' />
+			<input
+				type='file'
+				accept='image/*,video/*'
+				ref={fileInputRef}
+				style={{ display: 'none' }}
+				onChange={handleMediaChange}
+			/>
 			<div className='w-full p-2 rounded-2xl h-20 border-transparent focus:outline-none text-2xl flex flex-row gap-2 items-center justify-center mb-2'>
-				<PhotoSizeSelectActualOutlinedIcon
+				{/* <PhotoSizeSelectActualOutlinedIcon
 					fontSize='large'
 					className='text-gray-500'
-				/>
+				/> */}
 				<SmartDisplayOutlinedIcon
 					fontSize='large'
-					className='text-gray-500'
+					className='text-gray-500 cursor-pointer'
+					onClick={handleIconClick}
 				/>
 				<FeedButton
 					type='submit'

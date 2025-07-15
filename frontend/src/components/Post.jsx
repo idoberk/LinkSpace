@@ -5,6 +5,7 @@ import ForumRoundedIcon from '@mui/icons-material/ForumRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import { useState } from 'react';
+import { useUser } from '../hooks/useUser';
 
 import api from '../lib/axios';
 
@@ -16,11 +17,12 @@ const Post = ({ post, onPostChange }) => {
 	const [editing, setEditing] = useState(false);
 	const [content, setContent] = useState(post.content);
 	const [saving, setSaving] = useState(false);
-
+	const { user } = useUser();
 	if (!post) return null;
 
 	const author = post.author;
-	const user = JSON.parse(localStorage.getItem('user'));
+
+	// const user = JSON.parse(localStorage.getItem('user'));
 
 	const handleSave = async () => {
 		setSaving(true);
@@ -77,12 +79,6 @@ const Post = ({ post, onPostChange }) => {
 			</span>
 			{editing ? (
 				<div>
-					{/* <textarea
-						className='w-full border rounded p-2'
-						value={content}
-						onChange={(e) => setContent(e.target.value)}
-						rows={3}
-					/> */}
 					<input
 						type='text'
 						className='w-full border rounded p-2'
@@ -111,28 +107,28 @@ const Post = ({ post, onPostChange }) => {
 								key={idx}
 								src={item.url}
 								alt={`media-${idx}`}
-								className='rounded-xl max-h-80'
+								className='rounded-xl max-h-200 max-w-200'
 							/>
 						) : item.type === 'video' ? (
 							<video
 								key={idx}
 								src={item.url}
 								controls
-								className='rounded-xl max-h-80'
+								className='rounded-xl max-h-150  max-w-150'
 							/>
 						) : null,
 					)}
-					{post.tags && post.tags.length > 0 && (
-						<div className='flex flex-row gap-1'>
-							{post.tags.map((tag, idx) => (
-								<span
-									key={idx}
-									className='bg-blue-100 text-gray-500 px-2 py-1 rounded-full text-xs font-semibold'>
-									#{tag}
-								</span>
-							))}
-						</div>
-					)}
+				</div>
+			)}
+			{post.tags && post.tags.length > 0 && (
+				<div className='flex flex-row gap-1 mb-2'>
+					{post.tags.map((tag, idx) => (
+						<span
+							key={idx}
+							className=' text-gray-500 px-2 py-1 rounded-full text-md font-semibold'>
+							#{tag}
+						</span>
+					))}
 				</div>
 			)}
 			<div className='flex flex-row gap-2 mb-2 items-center'>
