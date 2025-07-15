@@ -8,11 +8,9 @@ import api from '../lib/axios';
 import FeedButton from './FeedButton';
 import ProfilePicture from './ProfilePicture';
 import DeleteAccountModal from './DeleteAccount';
-<<<<<<< HEAD
+ 
 import SearchModal from './SearchModal';
-=======
 import { useUser } from '../hooks/useUser';
->>>>>>> 142e6ab1b85b612ca5cedbf32f59bd5602b9cb90
 
 // TODO: add a on click to the settings page
 // TODO: check that the delete account modal is working and delete the account from DB
@@ -24,15 +22,13 @@ const TopBar = () => {
 	const settingMenuRef = useRef(null);
 	const [showDeleteModal, setShowDeleteModal] = useState(false);
 	const [deleting, setDeleting] = useState(false);
-<<<<<<< HEAD
 	const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 	const [searchResults, setSearchResults] = useState([]);
 	const [searchQuery, setSearchQuery] = useState('');
 	const [isSearching, setIsSearching] = useState(false);
 	const searchTimeoutRef = useRef(null);
-=======
+
 	const [deleteError, setDeleteError] = useState('');
->>>>>>> 142e6ab1b85b612ca5cedbf32f59bd5602b9cb90
 
 	const handleLogout = async () => {
 		try {
@@ -85,7 +81,6 @@ const TopBar = () => {
 		}
 	};
 
-<<<<<<< HEAD
 	const handleSearch = async (query) => {
 		if (!query.trim()) {
 			setSearchResults([]);
@@ -124,11 +119,10 @@ const TopBar = () => {
 		searchTimeoutRef.current = setTimeout(() => {
 			handleSearch(query);
 		}, 200); // Reduced delay for more responsive incremental search
-=======
+	}
 	const handleCancelDelete = () => {
 		setShowDeleteModal(false);
 		setDeleteError('');
->>>>>>> 142e6ab1b85b612ca5cedbf32f59bd5602b9cb90
 	};
 
 	return (
@@ -227,16 +221,14 @@ const TopBar = () => {
 					/>
 				)}
 			</div>
-<<<<<<< HEAD
-			
+{/* 			
 			<SearchModal 
 				isOpen={isSearchModalOpen} 
 				onClose={() => setIsSearchModalOpen(false)} 
 				searchResults={searchResults}
 				isSearching={isSearching}
-			/>
-=======
->>>>>>> 142e6ab1b85b612ca5cedbf32f59bd5602b9cb90
+			/> */}
+
 		</div>
 	);
 };
