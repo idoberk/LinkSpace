@@ -55,7 +55,7 @@ const Post = ({ post, onPostChange }) => {
 				<ProfilePicture
 					width={50}
 					height={50}
-					picture={author?.profile?.avatar || undefined}
+					picture={author?.profile?.avatar.url || undefined}
 				/>
 				<span className='text-gray-700 text-lg font-bold'>
 					{author?.profile?.firstName} {author?.profile?.lastName}

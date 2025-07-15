@@ -1,21 +1,21 @@
 import { useState } from 'react';
 
-import Input from '../components/Input';
+import Input from './Input';
 import api from '../lib/axios';
 import { useInput } from '../hooks/useInput';
 import { useNavigate } from 'react-router-dom';
-import Button from '../components/Button';
+import Button from './Button';
 import {
 	MAX_FIRST_LAST_NAME_LENGTH,
 	MIN_FIRST_LAST_NAME_LENGTH,
 	MIN_PASS_LENGTH,
 } from '../utils/constants';
 import { hasMinLength, isEmail, isValidName } from '../utils/validation';
-import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
+import PasswordStrengthIndicator from './PasswordStrengthIndicator';
 
 // TODO: add a generic profile picture to the created user
 
-const Register = () => {
+const Register = ({ onSwitchToLogin }) => {
 	const navigate = useNavigate();
 
 	const {
@@ -229,13 +229,13 @@ const Register = () => {
 				</Button>
 			</form>
 			<div className='text-center'>
-				<Button
-					onClick={() => navigate('/login')}
-					className={
-						'text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200'
-					}>
+				<button
+					type='button'
+					onClick={onSwitchToLogin}
+					className='text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200'
+					aria-label='Switch to login'>
 					Already have an account? Login
-				</Button>
+				</button>
 			</div>
 		</div>
 	);

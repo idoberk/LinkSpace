@@ -1,6 +1,3 @@
-import { MIN_PASS_LENGTH } from './constants';
-import { convertToTitleCase } from './stringManipulation';
-
 export const calcPasswordStrength = (password) => {
 	let strength = 0;
 
@@ -25,17 +22,4 @@ export const calcPasswordStrength = (password) => {
 		level,
 		percentage: (strength / 6) * 100,
 	};
-};
-
-export const getStrengthColor = (level) => {
-	switch (level) {
-		case 'Weak':
-			return 'red-500';
-		case 'Medium':
-			return 'yellow-500';
-		case 'Strong':
-			return 'green-500';
-		default:
-			return 'gray-500';
-	}
 };
