@@ -10,6 +10,7 @@ import { hasMinLength, isEmail } from '../utils/validation';
 
 const Login = () => {
 	const navigate = useNavigate();
+	const [loading, setLoading] = useState(false);
 
 	const {
 		value: emailValue,
@@ -24,8 +25,6 @@ const Login = () => {
 		handleInputBlur: handlePasswordBlur,
 		hasError: passwordHasError,
 	} = useInput('', (value) => hasMinLength(value, MIN_PASS_LENGTH));
-
-	const [loading, setLoading] = useState(false);
 
 	const handleFormSubmit = async (e) => {
 		e.preventDefault();
@@ -46,6 +45,8 @@ const Login = () => {
 				response.data.user,
 				response.data.token,
 			);
+			localStorage.setItem('user', JSON.stringify(response.data.user));
+			localStorage.setItem('token', response.data.token);
 			navigate('/home');
 		} catch (error) {
 			console.log(

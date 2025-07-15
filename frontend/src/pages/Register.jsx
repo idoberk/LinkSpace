@@ -13,7 +13,7 @@ import {
 import { hasMinLength, isEmail, isValidName } from '../utils/validation';
 import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
 
-// const Register = ({ onSwitchToLogin }) => {
+// TODO: add a generic profile picture to the created user
 const Register = () => {
 	const navigate = useNavigate();
 
