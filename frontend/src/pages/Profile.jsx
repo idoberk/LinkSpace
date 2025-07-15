@@ -1,15 +1,6 @@
-<<<<<<< HEAD
-import TopBar from '../components/TopBar';
-import ProfilePicture from '../components/ProfilePicture';
-import Post from '../components/Post';
-import SubmitPostItem from '../components/SubmitPostItem';
-import { useLocation, useParams } from 'react-router-dom';
-import FeedButton from '../components/FeedButton';
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-=======
+
+
 import { useEffect, useRef, useState } from 'react';
->>>>>>> 142e6ab1b85b612ca5cedbf32f59bd5602b9cb90
 import api from '../lib/axios';
 import Post from '../components/Post';
 import TopBar from '../components/TopBar';
@@ -27,16 +18,14 @@ import { formatDate } from '../utils/timeFormatting';
 // TODO: Add to the backend the birthdate to the public profile
 
 const Profile = () => {
-<<<<<<< HEAD
-	const navigate = useNavigate();
-	const { userId } = useParams(); // Get userId from URL params
-	const userFromLocation =
-		useLocation().state?.user || JSON.parse(localStorage.getItem('user'));
+	// const navigate = useNavigate();
+	// const { userId } = useParams(); // Get userId from URL params
+	// const userFromLocation =
+	// 	useLocation().state?.user || JSON.parse(localStorage.getItem('user'));
 
-	const [user, setUser] = useState(userFromLocation);
-=======
+	// const [user, setUser] = useState(userFromLocation);
+
 	const { user, setUser } = useUser();
->>>>>>> 142e6ab1b85b612ca5cedbf32f59bd5602b9cb90
 	const [showMenu, setShowMenu] = useState(false);
 	const [uploading, setUploading] = useState(false);
 	const [uploadType, setUploadType] = useState(null);
