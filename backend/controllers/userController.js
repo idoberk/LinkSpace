@@ -1,6 +1,9 @@
 const User = require('../models/User');
 const { handleErrors } = require('../middleware/errorHandler');
 const { createError } = require('../utils/errorUtils');
+const {
+	setUserStatToCount,
+} = require('../services/userService');
 
 // Operations users can do with other users (search users, send friend requests, etc...)
 
@@ -238,8 +241,16 @@ const acceptFriendRequest = async (req, res) => {
 		user.friends.push(friendId);
 		friend.friends.push(userId);
 
-		user.stats.totalFriends = user.friends.length;
-		friend.stats.totalFriends = friend.friends.length;
+		await setUserStatToCount(
+			userId,
+			'stats.totalFriends',
+			user.friends.length,
+		);
+		await setUserStatToCount(
+			friendId,
+			'stats.totalFriends',
+			friend.friends.length,
+		);
 
 		await user.save();
 		await friend.save();
@@ -296,8 +307,16 @@ const removeFriend = async (req, res) => {
 		user.friends = user.friends.filter((f) => f.toString() !== friendId);
 		friend.friends = friend.friends.filter((f) => f.toString() !== userId);
 
-		user.stats.totalFriends = user.friends.length;
-		friend.stats.totalFriends = friend.friends.length;
+		await setUserStatToCount(
+			userId,
+			'stats.totalFriends',
+			user.friends.length,
+		);
+		await setUserStatToCount(
+			friendId,
+			'stats.totalFriends',
+			friend.friends.length,
+		);
 
 		await user.save();
 		await friend.save();

@@ -13,19 +13,8 @@ import {
 import { hasMinLength, isEmail, isValidName } from '../utils/validation';
 import PasswordStrengthIndicator from '../components/PasswordStrengthIndicator';
 
-// const initialFormState = {
-// 	errors: null,
-// 	enteredValues: {
-// 		email: '',
-// 		password: '',
-// 		firstName: '',
-// 		lastName: '',
-// 	},
-// };
-
 // TODO: add a generic profile picture to the created user
 
-// const Register = ({ onSwitchToLogin }) => {
 const Register = () => {
 	const navigate = useNavigate();
 
@@ -240,7 +229,11 @@ const Register = () => {
 				</Button>
 			</form>
 			<div className='text-center'>
-				<Button onClick={() => navigate('/login')}>
+				<Button
+					onClick={() => navigate('/login')}
+					className={
+						'text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200'
+					}>
 					Already have an account? Login
 				</Button>
 			</div>

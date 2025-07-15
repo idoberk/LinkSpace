@@ -1,7 +1,15 @@
 const Group = require('../models/Group');
-const Comment = require('../models/Comment');
 const Post = require('../models/Post');
+const { createError } = require('../utils/errorUtils');
+const { deleteMediaFiles } = require('./mediaService');
+const { PAST_30_DAYS } = require('../utils/constants');
+const { deletePostAndComments } = require('./postService');
 
+/**
+ * Checks if group ownership transfer is allowed based on group settings and member count.
+ * @param {Object} group - The group document
+ * @returns {boolean}
+ */
 const shouldAllowOwnershipTransfer = (group) => {
 	if (!group.settings?.ownershipTransfer?.enabled) {
 		return false;
@@ -9,7 +17,7 @@ const shouldAllowOwnershipTransfer = (group) => {
 
 	const minimumMembers =
 		group.settings.ownershipTransfer.minimumMembersForTransfer || 2;
-	const approvedMembersCount = group.memers.filter(
+	const approvedMembersCount = group.members.filter(
 		(member) =>
 			member.status === 'approved' &&
 			member.user.toString() !== group.creator.toString(),
@@ -18,6 +26,11 @@ const shouldAllowOwnershipTransfer = (group) => {
 	return approvedMembersCount >= minimumMembers;
 };
 
+/**
+ * Checks if the group has been active in the past 30 days.
+ * @param {Object} group - The group document
+ * @returns {boolean}
+ */
 const isGroupActiveEnough = (group) => {
 	const lastActivity = group.settings?.activity?.lastActivity;
 
@@ -25,26 +38,32 @@ const isGroupActiveEnough = (group) => {
 		return false;
 	}
 
-	const activePastMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+	const activePastMonth = new Date(Date.now() - PAST_30_DAYS);
 
 	return new Date(lastActivity) > activePastMonth;
 };
 
-// TODO: Consider adding more hierarchial transfers (most active member / oldest member / etc...)
+/**
+ * Finds a new group owner (admin) if the current owner is removed.
+ * @param {Object} group - The group document
+ * @param {string|ObjectId} currentOwnerId - The current owner's user ID
+ * @param {Object} session - Mongoose session
+ * @returns {Promise<Object|null>} - The new owner user document or null
+ */
 const findNewGroupOwner = async (group, currentOwnerId, session) => {
 	if (!shouldAllowOwnershipTransfer(group) || !isGroupActiveEnough(group)) {
 		return null;
 	}
-	// Try to find an active manager
-	const activeManagers = group.managers.filter(
-		(manager) =>
-			manager._id.toString() !== currentOwnerId.toString() &&
-			manager.status?.isOnline !== false,
+	// Try to find an active admin
+	const activeAdmins = group.admins.filter(
+		(admin) =>
+			admin._id.toString() !== currentOwnerId.toString() &&
+			admin.status?.isOnline !== false,
 	);
 
-	if (activeManagers.length > 0) {
-		// Return the most recent active manager
-		return activeManagers.sort(
+	if (activeAdmins.length > 0) {
+		// Return the most recent active admin
+		return activeAdmins.sort(
 			(a, b) =>
 				new Date(b.status?.lastSeen || 0) -
 				new Date(a.status?.lastSeen || 0),
@@ -55,17 +74,24 @@ const findNewGroupOwner = async (group, currentOwnerId, session) => {
 	return null;
 };
 
+/**
+ * Transfers group ownership to a new owner.
+ * @param {string|ObjectId} groupId - The group ID
+ * @param {Object} newOwner - The new owner user document
+ * @param {Object} session - Mongoose session
+ * @returns {Promise<void>}
+ */
 const transferGroupOwnership = async (groupId, newOwner, session) => {
 	await Group.findByIdAndUpdate(
 		groupId,
 		{
 			creator: newOwner._id,
 			$pull: {
-				managers: newOwner._id,
+				admins: newOwner._id,
 				'members.user': newOwner._id,
 			},
 			$push: {
-				managers: newOwner._id,
+				admins: newOwner._id,
 			},
 		},
 		{ session },
@@ -77,24 +103,63 @@ const transferGroupOwnership = async (groupId, newOwner, session) => {
 	);
 };
 
+/**
+ * Deletes a group and all its posts, comments, and media.
+ * @param {string|ObjectId} groupId - The group ID
+ * @param {Object} session - Mongoose session
+ * @returns {Promise<void>}
+ */
 const deleteGroupAndContent = async (groupId, session) => {
-	await Post.deleteMany({ group: groupId }, { session });
+	const group = await Group.findById(groupId).session(session);
 
-	const groupPosts = await Post.find({ group: groupId }, '_id', { session });
-	const postIds = groupPosts.map((post) => post._id);
+	if (!group) {
+		throw createError('Group not found', 404);
+	}
+	if (group.coverImage) {
+		try {
+			await deleteMediaFiles([group.coverImage]);
+			console.log(`Deleted cover image for group ${groupId}`);
+		} catch (error) {
+			console.log(
+				`Error deleting cover image for group ${groupId}:`,
+				error,
+			);
+		}
+	}
 
-	await Comment.deleteMany({ post: { $in: postIds } }, { session });
+	const groupPosts = await Post.find({ group: groupId }, null, { session });
+
+	for (const post of groupPosts) {
+		if (post.media && post.media.length > 0) {
+			try {
+				await deleteMediaFiles(post.media);
+				console.log(
+					`Deleted media for post ${post._id} in group ${groupId}`,
+				);
+			} catch (error) {
+				console.error(
+					`Error deleting media for post ${post._id}:`,
+					error,
+				);
+			}
+		}
+		// Recursively delete post and all its comments
+		await deletePostAndComments(post._id, session);
+	}
+
 	await Group.findByIdAndDelete(groupId, { session });
-
-	console.log(
-		`Group ${groupId} deleted due to no suitable ownership transfer`,
-	);
 };
 
+/**
+ * Handles deletion or transfer of groups when a user is deleted.
+ * @param {string|ObjectId} userId - The user ID
+ * @param {Object} session - Mongoose session
+ * @returns {Promise<void>}
+ */
 const handleUserGroupDeletion = async (userId, session) => {
 	// Handle groups created by the user
 	const groupsCreatedByUser = await Group.find({ creator: userId })
-		.populate('managers', 'status lastSeen')
+		.populate('admins', 'status lastSeen')
 		.populate('members.user', 'status lastSeen')
 		.session(session);
 
@@ -107,22 +172,36 @@ const handleUserGroupDeletion = async (userId, session) => {
 		} else {
 			// Couldn't find a suitable replacement, delete the group instead
 			await deleteGroupAndContent(group._id, session);
+			console.log(
+				`Group ${group._id} deleted due to no suitable ownership transfer`,
+			);
 		}
 	}
 
 	// Remove user from all the groups they're a member of
 	await Group.updateMany(
 		{ 'members.user': userId },
-		{ $pull: { 'members.user': userId } },
+		{ $pull: { members: { user: userId } } },
 		{ session },
 	);
 
-	// Remove user from all the groups they're a manager of
+	// Remove user from all the groups they're an admin of
 	await Group.updateMany(
-		{ managers: userId },
-		{ $pull: { managers: userId } },
+		{ admins: userId },
+		{ $pull: { admins: userId } },
 		{ session },
 	);
+};
+
+/**
+ * Increments or decrements a numeric stat field for a group.
+ * @param {string|ObjectId} groupId - The group ID
+ * @param {string} statField - The stats field to update (e.g., 'stats.totalPosts')
+ * @param {number} [amount=1] - The amount to increment/decrement
+ * @returns {Promise<Object>} - The update result
+ */
+const updateGroupStat = async (groupId, statField, amount = 1) => {
+	return Group.findByIdAndUpdate(groupId, { $inc: { [statField]: amount } });
 };
 
 module.exports = {
@@ -132,4 +211,5 @@ module.exports = {
 	transferGroupOwnership,
 	deleteGroupAndContent,
 	handleUserGroupDeletion,
+	updateGroupStat,
 };

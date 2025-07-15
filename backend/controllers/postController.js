@@ -2,14 +2,14 @@ const Post = require('../models/Post');
 const User = require('../models/User');
 const Group = require('../models/Group');
 const { handleErrors } = require('../middleware/errorHandler');
-const { createError } = require('../utils/errorUtils');
 const {
 	deleteMediaFiles,
 	getTransformationOptions,
 	processMultipleFiles,
 } = require('../services/mediaService');
-
-// TODO: Timezone related places: searching objects (posts, comments...) based on dates.
+const { toggleLike } = require('../services/likeService');
+const { updateGroupStat } = require('../services/groupService');
+const { updateUserStat } = require('../services/userService');
 
 const createPost = async (req, res) => {
 	let uploadedMedia = [];
@@ -17,27 +17,6 @@ const createPost = async (req, res) => {
 	try {
 		const { content, visibility, tags, groupId } = req.body;
 		const authorId = req.user.userId;
-
-		// Validate group membership if posting to a group
-		if (groupId) {
-			const group = await Group.findById(groupId);
-			if (!group) {
-				throw createError('Group not found', 404);
-			}
-
-			const isMember = group.members.some(
-				(member) =>
-					member.user.toString() === authorId &&
-					member.status === 'approved',
-			);
-
-			if (!isMember) {
-				throw createError(
-					'You must be an approved member to post in this group',
-					403,
-				);
-			}
-		}
 
 		// Handle file uploads if present
 		if (req.files && req.files.length > 0) {
@@ -69,22 +48,18 @@ const createPost = async (req, res) => {
 		);
 
 		// Update user stats
-		await User.findByIdAndUpdate(authorId, {
-			$inc: { 'stats.totalPosts': 1 },
-		});
+		await updateUserStat(authorId, 'stats.totalPosts', 1);
 
 		// Update group stats if applicable
 		if (groupId) {
+			await updateGroupStat(groupId, 'stats.totalPosts', 1);
+
+			// Monthly stats update
+			const group = await Group.findById(groupId);
 			const currentMonth = new Date().toLocaleString('en-US', {
 				month: 'long',
 			});
 			const currentYear = new Date().getFullYear();
-
-			await Group.findByIdAndUpdate(groupId, {
-				$inc: { 'stats.totalPosts': 1 },
-			});
-
-			const group = await Group.findById(groupId);
 			const monthlyStatIndex = group.stats.monthlyPosts.findIndex(
 				(stat) =>
 					stat.month === currentMonth && stat.year === currentYear,
@@ -170,14 +145,14 @@ const deletePost = async (req, res) => {
 
 		await Post.findByIdAndDelete(postId);
 
-		await User.findByIdAndUpdate(userId, {
-			$inc: { 'stats.totalPosts': -1 },
-		});
+		await updateUserStat(userId, 'stats.totalPosts', -1);
 
 		if (post.group) {
-			await Group.findByIdAndUpdate(post.group, {
-				$inc: { 'stats.totalPosts': -1 },
-			});
+			await updateGroupStat(
+				post.group._id || post.group,
+				'stats.totalPosts',
+				-1,
+			);
 		}
 
 		res.json({ message: 'Post deleted successfully' });
@@ -245,8 +220,6 @@ const searchPosts = async (req, res) => {
 			query.visibility = 'public';
 		} else {
 			const user = await User.findById(userId);
-
-			const userGroups = user.groups;
 
 			// If a specific visibility is requested, only include it if the user has permission
 			if (visibility) {
@@ -345,10 +318,48 @@ const getAllPosts = async (req, res) => {
 	}
 };
 
+const likePost = async (req, res) => {
+	try {
+		const postId = req.params.id;
+		const userId = req.user.userId;
+		const result = await toggleLike(Post, postId, userId, {
+			statsField: 'stats.totalLikes',
+		});
+		res.json({
+			message: `Post ${result.action} successfully`,
+			likeCount: result.likeCount,
+			isLiked: result.isLiked,
+		});
+	} catch (error) {
+		const errors = handleErrors(error);
+		res.status(errors.status).json({ errors });
+	}
+};
+
+const getPostStatsPublic = async (req, res) => {
+	try {
+		const post = await Post.findById(req.params.id);
+		if (!post) return res.status(404).json({ error: 'Post not found' });
+
+		res.json({
+			createdAt: post.createdAt,
+			totalLikes: post.stats?.totalLikes || 0,
+			visibility: post.visibility,
+			group: post.group,
+			tags: post.tags,
+		});
+	} catch (error) {
+		const errors = handleErrors(error);
+		res.status(errors.status).json({ errors });
+	}
+};
+
 module.exports = {
 	createPost,
 	updatePost,
 	deletePost,
 	searchPosts,
 	getAllPosts,
+	likePost,
+	getPostStatsPublic,
 };

@@ -95,8 +95,12 @@ const Login = () => {
 					{loading ? 'Logging in...' : 'Login'}
 				</Button>
 			</form>
-			<div className='mt-6 text-center'>
-				<Button onClick={() => navigate('/register')}>
+			<div className='text-center'>
+				<Button
+					onClick={() => navigate('/register')}
+					className={
+						'text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200'
+					}>
 					Create a new account
 				</Button>
 			</div>
