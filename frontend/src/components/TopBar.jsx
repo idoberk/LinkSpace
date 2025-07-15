@@ -4,6 +4,7 @@ import SettingsSuggestRoundedIcon from '@mui/icons-material/SettingsSuggestRound
 import ProfilePicture from './ProfilePicture';
 import FeedButton from './FeedButton';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import api from '../lib/axios';
 import { useState, useEffect, useRef } from 'react';
 import DeleteAccountModal from './DeleteAccount';
@@ -142,6 +143,13 @@ const TopBar = ({ user }) => {
 						onDelete={handleDeleteAccount}
 					/>
 				)}
+			</div>
+			<div className='top-bar-right'>
+				<Link
+					to='/statistics'
+					className='px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors'>
+					Statistics
+				</Link>
 			</div>
 		</div>
 	);

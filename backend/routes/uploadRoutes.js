@@ -11,7 +11,7 @@ const { handleUploadErrors } = require('../middleware/errorHandler');
 router.post(
 	'/single',
 	authenticate,
-	uploadSingle,
+	uploadSingle('file'),
 	handleUploadErrors,
 	uploadController.uploadSingleFile,
 );
