@@ -23,11 +23,6 @@ const conversationSchema = new mongoose.Schema(
 			of: Number,
 			default: new Map(),
 		},
-		typing: {
-			type: Map,
-			of: Boolean,
-			default: new Map(),
-		},
 	},
 	{
 		timestamps: true,
@@ -75,10 +70,6 @@ conversationSchema.statics.findOrCreateConversation = async function (
 				[user1Id.toString(), 0],
 				[user2Id.toString(), 0],
 			]),
-			typing: new Map([
-				[user1Id.toString(), false],
-				[user2Id.toString(), false],
-			]),
 		});
 		await conversation.save();
 	}
@@ -93,11 +84,6 @@ conversationSchema.methods.incrementUnreadCount = function (userId) {
 
 conversationSchema.methods.resetUnreadCount = function (userId) {
 	this.unreadCount.set(userId.toString(), 0);
-};
-
-conversationSchema.methods.setTypingStatus = function (userId, isTyping) {
-	this.typing.set(userId.toString(), isTyping);
-	return this.save();
 };
 
 module.exports = mongoose.model('Conversation', conversationSchema);

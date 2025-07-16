@@ -39,8 +39,6 @@ const authenticateSocket = async (socket, next) => {
  * @param {Object} socket - The socket.io socket
  */
 const handleUserConnection = async (socket) => {
-	console.log(`User ${socket.user.profile.firstName} connected`);
-
 	connectedUsers.set(socket.userId, socket.id);
 
 	await User.findByIdAndUpdate(socket.userId, {
@@ -56,8 +54,6 @@ const handleUserConnection = async (socket) => {
  * @param {Object} socket - The socket.io socket
  */
 const handleUserDisconnection = async (socket) => {
-	console.log(`User ${socket.user.profile.firstName} disconnected`);
-
 	connectedUsers.delete(socket.userId);
 
 	await User.findByIdAndUpdate(socket.userId, {
@@ -75,7 +71,6 @@ const handleUserDisconnection = async (socket) => {
  */
 const emitToRecipient = (io, recipientId, event, data) => {
 	const recipientSocketId = connectedUsers.get(recipientId);
-
 	if (recipientSocketId) {
 		io.to(recipientSocketId).emit(event, data);
 	}
@@ -134,8 +129,9 @@ const handleSendMessage = async (socket, io, data) => {
 			conversationId: conversation._id,
 		};
 
-		socket.emit('message_sent', messageData);
-		emitToRecipient(io, recipientId, 'new_message', messageData);
+		// Emit to both sender and recipient
+		emitToRecipient(io, recipientId, 'new_message', messageData); // recipient
+		emitToRecipient(io, socket.userId, 'new_message', messageData); // sender
 	} catch (error) {
 		console.error('Error sending message:', error);
 		socket.emit('error', { message: error.message });
@@ -175,44 +171,6 @@ const handleMarkAsRead = async (socket, io, data) => {
 };
 
 /**
- * Handles typing indicator events via socket.
- * @param {Object} socket - The socket.io socket
- * @param {Object} io - The socket.io server instance
- * @param {Object} data - The typing data
- * @param {boolean} isTyping - Whether the user is typing
- */
-const handleTypingIndicator = async (socket, io, data, isTyping) => {
-	try {
-		const { conversationId, recipientId } = data;
-
-		const conversation = await conversationService.getOrCreateConversation(
-			socket.userId,
-			recipientId,
-		);
-
-		await conversationService.updateTypingStatus(
-			conversationId,
-			socket.userId,
-			isTyping,
-		);
-
-		notifyOtherParticipants(
-			io,
-			conversation,
-			socket.userId,
-			'user_typing',
-			{
-				conversationId: conversation._id,
-				userId: socket.userId,
-				isTyping,
-			},
-		);
-	} catch (error) {
-		console.error('Error updating typing status:', error);
-	}
-};
-
-/**
  * Sets up all socket event handlers for the server.
  * @param {Object} io - The socket.io server instance
  */
@@ -225,13 +183,6 @@ const setupSocketHandlers = (io) => {
 			handleSendMessage(socket, io, data),
 		);
 		socket.on('mark_as_read', (data) => handleMarkAsRead(socket, io, data));
-
-		socket.on('typing_start', (data) =>
-			handleTypingIndicator(socket, io, data, true),
-		);
-		socket.on('typing_stop', (data) =>
-			handleTypingIndicator(socket, io, data, false),
-		);
 
 		socket.on('disconnect', () => handleUserDisconnection(socket));
 	});

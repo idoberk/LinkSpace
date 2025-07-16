@@ -30,7 +30,11 @@ const FriendsDisplay = () => {
 					friendsID.map(async (friendId) => {
 						try {
 							const res = await api.get(`/users/${friendId}`);
-							return { userId: friendId, profile: res.data };
+
+							return {
+								userId: friendId,
+								profile: res.data.profile,
+							};
 						} catch (err) {
 							console.error(
 								`Error fetching user ${friendId}`,
@@ -40,7 +44,6 @@ const FriendsDisplay = () => {
 						}
 					}),
 				);
-				console.log('fetchedProfiles', fetchedProfiles);
 
 				setFriends(fetchedProfiles.filter(Boolean));
 			} catch (err) {
@@ -70,15 +73,13 @@ const FriendsDisplay = () => {
 								key={friend.userId}
 								className='flex items-center gap-2 p-3 bg-gray-50 space-y-2 rounded-lg'>
 								<ProfilePicture
-									picture={
-										friend?.profile?.profile?.avatar?.url
-									}
+									picture={friend?.profile?.avatar?.url}
 									width={40}
 									height={40}
 								/>
 								<h4 className='text-sm text-gray-800'>
-									{friend?.profile?.profile?.firstName}{' '}
-									{friend?.profile?.profile?.lastName}
+									{friend?.profile?.firstName}{' '}
+									{friend?.profile?.lastName}
 								</h4>
 							</div>
 						))}

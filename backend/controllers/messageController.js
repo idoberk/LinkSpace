@@ -1,6 +1,5 @@
 const Message = require('../models/Message');
 const Conversation = require('../models/Conversation');
-const User = require('../models/User');
 const conversationService = require('../services/conversationService');
 const messageService = require('../services/messageService');
 const { handleErrors } = require('../middleware/errorHandler');
@@ -71,6 +70,12 @@ const getConversations = async (req, res) => {
 					};
 				}
 			});
+			// Convert unreadCount Map to plain object for frontend
+			if (conversation.unreadCount instanceof Map) {
+				conversation.unreadCount = Object.fromEntries(
+					conversation.unreadCount,
+				);
+			}
 		});
 
 		res.json({ conversations });
@@ -80,4 +85,38 @@ const getConversations = async (req, res) => {
 	}
 };
 
-module.exports = { createMessage, getConversationWithUser, getConversations };
+const getMessagesForConversation = async (req, res) => {
+	try {
+		const { conversationId } = req.params;
+		const userId = req.user.userId;
+
+		const conversation = await Conversation.findById(conversationId);
+		if (!conversation || !conversation.participants.includes(userId)) {
+			return res.status(403).json({
+				errors: { message: 'Access denied' },
+			});
+		}
+
+		const messages = await Message.find({ conversation: conversationId })
+			.sort({ createdAt: 1 })
+			.populate(
+				'sender',
+				'profile.firstName profile.lastName profile.avatar',
+			);
+
+		return res.status(200).json({
+			message: 'Messages fetched successfully',
+			messages: messages.map((msg) => msg.toObject()),
+		});
+	} catch (error) {
+		const errors = handleErrors(error);
+		return res.status(errors.status || 500).json({ errors });
+	}
+};
+
+module.exports = {
+	createMessage,
+	getConversationWithUser,
+	getConversations,
+	getMessagesForConversation,
+};
