@@ -32,7 +32,10 @@ const SideBar = () => {
 			/>
 			<SideBarItem
 				icon={<SupervisedUserCircleRoundedIcon />}
-				text='Friends'
+				text='groupcard'
+				onClick={() => {
+					navigate('/create-group');
+				}}
 			/>
 			<SideBarItem
 				icon={<ChatBubbleOutlineOutlinedIcon />}
@@ -40,9 +43,9 @@ const SideBar = () => {
 			/>
 			<SideBarItem icon={<InsightsRoundedIcon />} text='Insights' />
 
-			<div className='mt-8 w-1\5 max-w-xs bg-white border border-gray-300 rounded-xl shadow-lg p-4'>
+			{/* <div className='mt-8 w-1\5 max-w-xs bg-white border border-gray-300 rounded-xl shadow-lg p-4'>
 				<FriendsRequest />
-			</div>
+			</div> */}
 		</div>
 	);
 };

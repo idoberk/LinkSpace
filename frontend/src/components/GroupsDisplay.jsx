@@ -101,9 +101,6 @@ const GroupsDisplay = () => {
 						Create New Group
 					</FeedButton>
 					<div className='w-full ml-2'>
-						<h2 className='text-3xl font-bold text-gray-500 mt-2 ml-4'>
-							My Groups
-						</h2>
 						{myGroups.length === 0 ? (
 							<div>No groups found.</div>
 						) : (
@@ -208,8 +205,18 @@ const GroupsDisplay = () => {
 									</div>
 								) : (
 									groups.map((group) => (
-										<div key={group._id}>
-											<h1>{group.name}</h1>
+										<div
+											key={group._id}
+											className='cursor-pointer border rounded p-3 hover:bg-gray-100 transition'
+											onClick={() =>
+												navigate(`/group/${group._id}`)
+											}>
+											<h1 className='text-xl font-bold'>
+												{group.name}
+											</h1>
+											<p className='text-gray-600'>
+												{group.description}
+											</p>
 										</div>
 									))
 								)}

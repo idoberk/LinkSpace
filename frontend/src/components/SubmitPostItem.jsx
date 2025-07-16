@@ -2,7 +2,7 @@ import FeedButton from './FeedButton';
 import ProfilePicture from './ProfilePicture';
 import SmartDisplayOutlinedIcon from '@mui/icons-material/SmartDisplayOutlined';
 import PhotoSizeSelectActualOutlinedIcon from '@mui/icons-material/PhotoSizeSelectActualOutlined';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import api from '../lib/axios';
 import { useUser } from '../hooks/useUser';
 
@@ -13,14 +13,39 @@ const SubmitPostItem = ({ onPostSubmit }) => {
 	const [media, setMedia] = useState([]);
 	const [tags, setTags] = useState([]);
 	const [tagsInput, setTagsInput] = useState('');
+	const [visibility, setVisibility] = useState('public');
+	const [selectedGroup, setSelectedGroup] = useState('');
+	const [userGroups, setUserGroups] = useState([]);
 	const { user } = useUser();
 	const fileInputRef = useRef();
 
 	const cleanForm = async () => {
 		setContent('');
-		// setMedia([]);
+		setMedia([]);
 		setTags([]);
 		setTagsInput('');
+		setVisibility('public');
+		setSelectedGroup('');
+	};
+
+	useEffect(() => {
+		const fetchUserGroups = async () => {
+			try {
+				const response = await api.get('/groups');
+				setUserGroups(response.data.groups);
+			} catch (error) {
+				console.error('Error fetching groups:', error);
+			}
+		};
+		fetchUserGroups();
+	}, []);
+
+	const handleVisibilityChange = (e) => {
+		const newVisibility = e.target.value;
+		setVisibility(newVisibility);
+		if (newVisibility !== 'group') {
+			setSelectedGroup('');
+		}
 	};
 
 	const handleIconClick = () => {
@@ -43,6 +68,7 @@ const SubmitPostItem = ({ onPostSubmit }) => {
 	const handleUploadPost = async (e) => {
 		e.preventDefault();
 		if (!content.trim()) return;
+
 		const formData = new FormData();
 		formData.append('content', content);
 		formData.append('tags', tags.join(','));
@@ -107,6 +133,40 @@ const SubmitPostItem = ({ onPostSubmit }) => {
 						</span>
 					))}
 				</div>
+			</div>
+			<div className='w-full'>
+				<hr className='w-full border-gray-200 mb-3' />
+				<h1 className='text-md text-gray-600 w-full'>
+					Post Visibility
+				</h1>
+				<select
+					className='w-full p-2 border rounded'
+					value={visibility}
+					onChange={handleVisibilityChange}>
+					<option value='public'>Public</option>
+					<option value='friends'>Friends Only</option>
+					<option value='group'>Group</option>
+					<option value='private'>Private</option>
+				</select>
+				{visibility === 'group' && (
+					<div className='w-full'>
+						<h1 className='text-md text-gray-600 w-full'>
+							Select Group
+						</h1>
+						<select
+							className='w-full p-2 border rounded'
+							value={selectedGroup}
+							onChange={(e) => setSelectedGroup(e.target.value)}
+							required>
+							<option value=''>Choose a group...</option>
+							{userGroups.map((group) => (
+								<option key={group._id} value={group._id}>
+									{group.name}
+								</option>
+							))}
+						</select>
+					</div>
+				)}
 			</div>
 			<hr className='w-full border-gray-200 mb-3' />
 			<input

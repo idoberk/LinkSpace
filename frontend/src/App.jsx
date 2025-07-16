@@ -14,6 +14,8 @@ import GroupsDisplay from './components/GroupsDisplay';
 import PublicOnlyRoute from './components/PublicOnlyRoute';
 import { UserProvider } from './contexts/UserContext.jsx';
 
+import GroupCard from './components/GroupCard';
+
 const App = () => {
 	return (
 		<UserProvider>
@@ -23,6 +25,8 @@ const App = () => {
 						path='/'
 						element={<Navigate to='/login' replace />}
 					/>
+
+					<Route path='/groupcard' element={<GroupCard />} />
 
 					{/* Public-only routes */}
 					<Route element={<PublicOnlyRoute />}>

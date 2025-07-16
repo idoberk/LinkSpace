@@ -22,6 +22,7 @@ const CreateGroup = () => {
 			formData.append('description', form.description);
 			formData.append('category', form.category);
 			formData.append('privacy', form.privacy);
+			formData.append('settings', JSON.stringify({}));
 			const response = await api.post('/groups', formData);
 			// const response = await api.post('/groups', {
 			// 	name: form.name,
@@ -116,3 +117,130 @@ const CreateGroup = () => {
 };
 
 export default CreateGroup;
+
+// import React, { useState } from 'react';
+// import api from '../lib/axios';
+// import { useNavigate } from 'react-router-dom';
+// import GroupCard from './GroupCard';
+
+// const CreateGroup = () => {
+// 	const [name, setName] = useState('');
+// 	const [description, setDescription] = useState('');
+// 	const [privacy, setPrivacy] = useState('public');
+// 	const [category, setCategory] = useState('other');
+// 	const [coverImage, setCoverImage] = useState(null);
+// 	// const { settings } = useState({
+// 	// 	joiningRequiresApproval: true,
+
+// 	// });
+// 	const [settings, setSettings] = useState({
+// 		joiningRequiresApproval: true,
+// 	});
+// 	const [createdGroup, setCreatedGroup] = useState(null);
+
+// 	const [error, setError] = useState('');
+// 	const [loading, setLoading] = useState(false);
+
+// 	const navigate = useNavigate();
+
+// 	const handleFileChange = (e) => {
+// 		setCoverImage(e.target.files[0]);
+// 	};
+
+// 	const handleSubmit = async (e) => {
+// 		e.preventDefault();
+// 		setLoading(true);
+// 		setError('');
+// 		console.log('Sending group data:', {
+// 			name,
+// 			description,
+// 			privacy,
+// 			category,
+// 			settings,
+// 			coverImage,
+// 		});
+// 		try {
+// 			const formData = new FormData();
+// 			formData.append('name', name);
+// 			formData.append('description', description);
+// 			formData.append('privacy', privacy);
+// 			formData.append('category', category);
+// 			formData.append('settings', JSON.stringify(settings));
+// 			if (coverImage) {
+// 				formData.append('file', coverImage);
+// 			}
+
+// 			const res = await api.post('/groups', formData, {
+// 				headers: { 'Content-Type': 'multipart/form-data' },
+// 			});
+
+// 			const group = res.data.group;
+// 			setCreatedGroup(group);
+// 			console.log({ group });
+// 			// navigate(`/groupcard/${group._id}`, { state: { group } });
+// 			navigate(`/groupcard`, { state: { group } });
+// 		} catch (err) {
+// 			setError(
+// 				err.response?.data?.errors?.message ||
+//
+// 			);
+// 		} finally {
+// 			setLoading(false);
+// 		}
+// 	};
+
+// 	return (
+// 		<div className='create-group-container'>
+// 			<h2>new group/h2>
+// 			{!createdGroup ? (
+// 				<form onSubmit={handleSubmit} encType='multipart/form-data'>
+// 					<label>
+
+// 						<input
+// 							value={name}
+// 							onChange={(e) => setName(e.target.value)}
+// 							required
+// 						/>
+// 					</label>
+// 					<label>
+
+// 						<input
+// 							value={description}
+// 							onChange={(e) => setDescription(e.target.value)}
+// 						/>
+// 					</label>
+// 					<label>
+// 						<select
+// 							value={privacy}
+// 							onChange={(e) => setPrivacy(e.target.value)}>
+// 							<option value='public'>public</option>
+// 							<option value='private'>private</option>
+// 						</select>
+// 					</label>
+// 					<label>
+
+// 						<input
+// 							value={category}
+// 							onChange={(e) => setCategory(e.target.value)}
+// 						/>
+// 					</label>
+// 					<label>
+// 						<input
+// 							type='file'
+// 							accept='image/*'
+// 							onChange={handleFileChange}
+// 						/>
+// 					</label>
+// 					<button type='submit' disabled={loading}>
+// 						{loading ? 'creating...' : 'create group'}
+// 					</button>
+// 					{error && <div className='error'>{error}</div>}
+// 				</form>
+// 			) : (
+// 				<GroupCard group={createdGroup} />
+// 			)}
+// 		</div>
+// 	);
+// };
+
+// export default CreateGroup;

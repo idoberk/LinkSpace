@@ -5,3 +5,12 @@ export const UserContext = createContext({
 	setUser: () => {},
 	logout: () => {},
 });
+
+// import { createContext } from 'react';
+
+// export const UserContext = createContext({
+// 	user: null,
+// 	setUser: () => {},
+// 	updateUser: () => {},
+// 	logout: () => {},
+// });

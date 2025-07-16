@@ -2,58 +2,43 @@ import { useState, useEffect } from 'react';
 import ProfilePicture from './ProfilePicture';
 import api from '../lib/axios';
 import { useUser } from '../hooks/useUser';
+
 const FriendsDisplay = () => {
 	const { user } = useUser();
-	const [friendsID] = useState(user?.friends || []);
 	const [friends, setFriends] = useState([]);
 	const [loading, setLoading] = useState(false);
 
-	useEffect(() => {
-		const fetchProfiles = async () => {
-			try {
-				setLoading(true);
-				// const fetchedProfiles = await Promise.all(
-				// 	friendsID.map(async (req) => {
-				// 		try {
-				// 			const res = await api.get(`/users/${req.user}`);
-				// 			return { userId: req.user, profile: res.data };
-				// 		} catch (err) {
-				// 			console.error(
-				// 				`Error fetching user ${req.user}`,
-				// 				err,
-				// 			);
-				// 			return null;
-				// 		}
-				// 	}),
-				// );
-				const fetchedProfiles = await Promise.all(
-					friendsID.map(async (friendId) => {
-						try {
-							const res = await api.get(`/users/${friendId}`);
-							return { userId: friendId, profile: res.data };
-						} catch (err) {
-							console.error(
-								`Error fetching user ${friendId}`,
-								err,
-							);
-							return null;
-						}
-					}),
-				);
-				console.log('fetchedProfiles', fetchedProfiles);
-
-				setFriends(fetchedProfiles.filter(Boolean));
-			} catch (err) {
-				console.error('Error fetching profiles:', err);
-			} finally {
-				setLoading(false);
-			}
-		};
-
-		if (friendsID.length > 0) {
-			fetchProfiles();
+	// מביאים את הפרופילים של החברים
+	const fetchData = async () => {
+		if (!user?.friends || user.friends.length === 0) {
+			setFriends([]);
+			return;
 		}
-	}, [friendsID]);
+		try {
+			setLoading(true);
+			const fetchedProfiles = await Promise.all(
+				user.friends.map(async (friendId) => {
+					try {
+						const res = await api.get(`/users/${friendId}`);
+						return { userId: friendId, profile: res.data };
+					} catch (err) {
+						console.error(`Error fetching user ${friendId}`, err);
+						return null;
+					}
+				}),
+			);
+			setFriends(fetchedProfiles.filter(Boolean));
+		} catch (err) {
+			console.error('Error fetching profiles:', err);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	// useEffect שתלוי ב-user
+	useEffect(() => {
+		fetchData();
+	}, [user]);
 
 	return (
 		<div>

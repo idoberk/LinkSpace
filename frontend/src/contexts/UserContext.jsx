@@ -44,3 +44,47 @@ export const UserProvider = ({ children }) => {
 		</UserContext.Provider>
 	);
 };
+
+// import { useState, useEffect } from 'react';
+// import { UserContext } from './UserContext.js';
+
+// export const UserProvider = ({ children }) => {
+// 	const [user, setUser] = useState(null);
+
+// 	useEffect(() => {
+// 		try {
+// 			const userFromStorage = localStorage.getItem('user');
+// 			if (userFromStorage) {
+// 				setUser(JSON.parse(userFromStorage));
+// 			}
+// 		} catch (error) {
+// 			console.error('Error loading user from localStorage:', error);
+// 			localStorage.removeItem('user');
+// 		}
+// 	}, []);
+
+// 	const updateUser = (newUserData) => {
+// 		try {
+// 			console.log('Updating user with:', newUserData);
+// 			setUser(newUserData);
+// 			localStorage.setItem('user', JSON.stringify(newUserData));
+// 		} catch (error) {
+// 			console.error('Error updating user:', error);
+// 		}
+// 	};
+
+// 	const logout = () => {
+// 		try {
+// 			setUser(null);
+// 			localStorage.removeItem('user');
+// 		} catch (error) {
+// 			console.error('Error during logout:', error);
+// 		}
+// 	};
+
+// 	return (
+// 		<UserContext.Provider value={{ user, setUser, updateUser, logout }}>
+// 			{children}
+// 		</UserContext.Provider>
+// 	);
+// };
