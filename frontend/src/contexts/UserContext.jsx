@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
 	getUser,
 	setUser as setUserInStorage,
@@ -6,9 +6,12 @@ import {
 	removeToken,
 } from '../utils/auth';
 import { UserContext } from './UserContext.js';
+import { createSocket } from '../lib/socket';
 
 export const UserProvider = ({ children }) => {
 	const [user, setUserState] = useState(() => getUser());
+	const [socket, setSocket] = useState(null); // <-- Add this
+	const socketRef = useRef(null);
 
 	// Keep localStorage in sync when user changes
 	const setUser = useCallback((newUser) => {
@@ -20,11 +23,16 @@ export const UserProvider = ({ children }) => {
 		}
 	}, []);
 
-	// Logout function clears user and token
+	// Logout function clears user and token, and disconnects socket
 	const logout = useCallback(() => {
 		setUserState(null);
 		removeUser();
 		removeToken();
+		if (socketRef.current) {
+			socketRef.current.disconnect();
+			socketRef.current = null;
+			setSocket(null); // <-- update state
+		}
 	}, []);
 
 	// Sync with localStorage changes (e.g., in other tabs)
@@ -38,8 +46,33 @@ export const UserProvider = ({ children }) => {
 		return () => window.removeEventListener('storage', handleStorage);
 	}, []);
 
+	// Manage socket connection on login/logout
+	useEffect(() => {
+		if (user) {
+			if (socketRef.current) {
+				socketRef.current.disconnect();
+			}
+			const newSocket = createSocket();
+			socketRef.current = newSocket;
+			setSocket(newSocket); // <-- update state so context consumers re-render
+		} else {
+			if (socketRef.current) {
+				socketRef.current.disconnect();
+				socketRef.current = null;
+			}
+			setSocket(null); // <-- update state
+		}
+		return () => {
+			if (socketRef.current) {
+				socketRef.current.disconnect();
+				socketRef.current = null;
+			}
+			setSocket(null); // <-- update state
+		};
+	}, [user]);
+
 	return (
-		<UserContext.Provider value={{ user, setUser, logout }}>
+		<UserContext.Provider value={{ user, setUser, logout, socket }}>
 			{children}
 		</UserContext.Provider>
 	);

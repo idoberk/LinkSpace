@@ -4,41 +4,73 @@ import api from '../lib/axios';
 import { useUser } from '../hooks/useUser';
 
 const FriendsDisplay = () => {
+	// const { user } = useUser();
+	// const [friends, setFriends] = useState([]);
+	// const [loading, setLoading] = useState(false);
+
+	// const fetchData = async () => {
+	// 	if (!user?.friends || user.friends.length === 0) {
+	// 		setFriends([]);
+	// 		return;
+
 	const { user } = useUser();
+	const [friendsID] = useState(user?.friends || []);
 	const [friends, setFriends] = useState([]);
 	const [loading, setLoading] = useState(false);
 
-	// מביאים את הפרופילים של החברים
-	const fetchData = async () => {
-		if (!user?.friends || user.friends.length === 0) {
-			setFriends([]);
-			return;
-		}
-		try {
-			setLoading(true);
-			const fetchedProfiles = await Promise.all(
-				user.friends.map(async (friendId) => {
-					try {
-						const res = await api.get(`/users/${friendId}`);
-						return { userId: friendId, profile: res.data };
-					} catch (err) {
-						console.error(`Error fetching user ${friendId}`, err);
-						return null;
-					}
-				}),
-			);
-			setFriends(fetchedProfiles.filter(Boolean));
-		} catch (err) {
-			console.error('Error fetching profiles:', err);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	// useEffect שתלוי ב-user
 	useEffect(() => {
-		fetchData();
-	}, [user]);
+		const fetchProfiles = async () => {
+			try {
+				setLoading(true);
+				// const fetchedProfiles = await Promise.all(
+				// 	friendsID.map(async (req) => {
+				// 		try {
+				// 			const res = await api.get(`/users/${req.user}`);
+				// 			return { userId: req.user, profile: res.data };
+				// 		} catch (err) {
+				// 			console.error(
+				// 				`Error fetching user ${req.user}`,
+				// 				err,
+				// 			);
+				// 			return null;
+				// 		}
+				// 	}),
+				// );
+				const fetchedProfiles = await Promise.all(
+					friendsID.map(async (friendId) => {
+						try {
+							const res = await api.get(`/users/${friendId}`);
+
+							return {
+								userId: friendId,
+								profile: res.data.profile,
+							};
+						} catch (err) {
+							console.error(
+								`Error fetching user ${friendId}`,
+								err,
+							);
+							return null;
+						}
+					}),
+				);
+
+				setFriends(fetchedProfiles.filter(Boolean));
+			} catch (err) {
+				console.error('Error fetching profiles:', err);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		if (friendsID.length > 0) {
+			fetchProfiles();
+		}
+	}, [friendsID]);
+
+	// useEffect(() => {
+	// 	fetchData();
+	// }, [user]);
 
 	return (
 		<div>
@@ -55,15 +87,13 @@ const FriendsDisplay = () => {
 								key={friend.userId}
 								className='flex items-center gap-2 p-3 bg-gray-50 space-y-2 rounded-lg'>
 								<ProfilePicture
-									picture={
-										friend?.profile?.profile?.avatar?.url
-									}
+									picture={friend?.profile?.avatar?.url}
 									width={40}
 									height={40}
 								/>
 								<h4 className='text-sm text-gray-800'>
-									{friend?.profile?.profile?.firstName}{' '}
-									{friend?.profile?.profile?.lastName}
+									{friend?.profile?.firstName}{' '}
+									{friend?.profile?.lastName}
 								</h4>
 							</div>
 						))}

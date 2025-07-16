@@ -10,6 +10,7 @@ router.get(
 	'/conversations/user/:userId',
 	messageController.getConversationWithUser,
 );
+router.get('/:conversationId', messageController.getMessagesForConversation);
 
 router.post('/', messageController.createMessage);
 

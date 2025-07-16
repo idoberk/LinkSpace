@@ -114,24 +114,6 @@ const getOrCreateConversation = async (user1Id, user2Id) => {
 };
 
 /**
- * Updates typing status for a user in a conversation.
- * @param {string|ObjectId} conversationId - The conversation ID
- * @param {string|ObjectId} userId - The user ID
- * @param {boolean} isTyping - Typing status
- * @returns {Promise<Object>} - The updated conversation
- */
-const updateTypingStatus = async (conversationId, userId, isTyping) => {
-	const conversation = await Conversation.findById(conversationId);
-
-	if (!conversation || !conversation.participants.includes(userId)) {
-		throw createError('Access denied', 403);
-	}
-
-	await conversation.setTypingStatus(userId, isTyping);
-	return conversation;
-};
-
-/**
  * Gets the unread message count for a user in a conversation.
  * @param {string|ObjectId} conversationId - The conversation ID
  * @param {string|ObjectId} userId - The user ID
@@ -162,7 +144,6 @@ const deleteConversationsByUser = async (userId, session = null) => {
 module.exports = {
 	getUserConversations,
 	getOrCreateConversation,
-	updateTypingStatus,
 	getUnreadCount,
 	deleteConversationsByUser,
 };

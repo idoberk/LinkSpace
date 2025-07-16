@@ -13,6 +13,11 @@ import RequireAuth from './components/RequireAuth';
 import GroupsDisplay from './components/GroupsDisplay';
 import PublicOnlyRoute from './components/PublicOnlyRoute';
 import { UserProvider } from './contexts/UserContext.jsx';
+import Messages from './pages/Messages';
+import ProtectedLayout from './components/ProtectedLayout';
+
+// FIXME: Check why profile pictures are updating for friends too.
+// TODO: Add messages implementation.
 
 import GroupCard from './components/GroupCard';
 
@@ -36,11 +41,20 @@ const App = () => {
 
 					{/* Protected routes group */}
 					<Route element={<RequireAuth />}>
-						<Route path='/home' element={<Home />} />
-						<Route path='/profile' element={<Profile />} />
-						<Route path='/groups' element={<GroupsDisplay />} />
-						<Route path='/create-group' element={<CreateGroup />} />
-						<Route path='/statistics' element={<Statistics />} />
+						<Route element={<ProtectedLayout />}>
+							<Route path='/home' element={<Home />} />
+							<Route path='/profile' element={<Profile />} />
+							<Route path='/groups' element={<GroupsDisplay />} />
+							<Route
+								path='/create-group'
+								element={<CreateGroup />}
+							/>
+							<Route
+								path='/statistics'
+								element={<Statistics />}
+							/>
+							<Route path='/messages' element={<Messages />} />
+						</Route>
 					</Route>
 				</Routes>
 			</Router>

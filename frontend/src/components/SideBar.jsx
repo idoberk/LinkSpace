@@ -40,6 +40,9 @@ const SideBar = () => {
 			<SideBarItem
 				icon={<ChatBubbleOutlineOutlinedIcon />}
 				text='Messages'
+				onClick={() => {
+					navigate('/messages', { state: { user } });
+				}}
 			/>
 			<SideBarItem icon={<InsightsRoundedIcon />} text='Insights' />
 

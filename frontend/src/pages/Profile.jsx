@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import api from '../lib/axios';
 import Post from '../components/Post';
-import TopBar from '../components/TopBar';
 import { useUser } from '../hooks/useUser';
 import FeedButton from '../components/FeedButton';
 import ProfilePicture from '../components/ProfilePicture';
@@ -130,7 +129,6 @@ const Profile = () => {
 
 	return (
 		<div className='bg-white min-h-screen'>
-			<TopBar />
 			<div className='relative w-full h-100 rounded-b-lg'>
 				<div
 					className='overflow-hidden h-full w-full'
@@ -277,7 +275,7 @@ const Profile = () => {
 				<div className='flex justify-center items-center'>
 					<SubmitPostItem onPostSubmit={handlePostSubmit} />
 				</div>
-				{posts
+				{/* {posts
 					.filter((post) => post.author._id === user._id)
 					.map((post) => (
 						<Post
@@ -285,7 +283,7 @@ const Profile = () => {
 							post={post}
 							onPostChange={fetchPosts}
 						/>
-					))}
+					))} */}
 			</div>
 		</div>
 	);
