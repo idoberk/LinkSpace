@@ -4,6 +4,7 @@ import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutline
 import InsightsRoundedIcon from '@mui/icons-material/InsightsRounded';
 import SupervisedUserCircleRoundedIcon from '@mui/icons-material/SupervisedUserCircleRounded';
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd';
+import BarChartIcon from '@mui/icons-material/BarChart';
 
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../hooks/useUser';
@@ -39,6 +40,7 @@ const SideBar = () => {
 					navigate('/messages', { state: { user } });
 				}}
 			/>
+
 			<SideBarItem
 				text='Canvas'
 				onClick={() => {
@@ -50,6 +52,19 @@ const SideBar = () => {
 				text='Insights'
 				onClick={() => navigate('/statistics')}
 			/>
+
+			{/* <SideBarItem icon={<InsightsRoundedIcon />} text='Insights' />
+			<SideBarItem
+				icon={<BarChartIcon />}
+				text='Statistics'
+				onClick={() => {
+					navigate('/statistics');
+				}}
+			/> */}
+
+			{/* <div className='mt-8 w-1\5 max-w-xs bg-white border border-gray-300 rounded-xl shadow-lg p-4'>
+				<FriendsRequest />
+			</div> */}
 		</div>
 	);
 };

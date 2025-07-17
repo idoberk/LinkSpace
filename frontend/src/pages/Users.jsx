@@ -106,7 +106,6 @@ const Users = () => {
 	const handleSendRequest = async (targetUserId) => {
 		try {
 			await api.post(`/users/${targetUserId}/friend-request`);
-			// נעדכן את הcontext
 			setUser({
 				...user,
 				friendRequests: {

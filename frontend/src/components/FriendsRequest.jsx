@@ -645,16 +645,29 @@ const FriendsRequest = () => {
 
 	const fetchData = async () => {
 		console.log('Fetching friend requests data...');
+
+		// console.log(
+		// 	'User friend requests received:',
+		// 	user?.friendRequests?.received,
+		// );
+
 		console.log(
 			'User friend requests received:',
 			user?.friendRequests?.received,
 		);
-
 		if (!user?.friendRequests?.received) {
 			console.log('No friend requests received, setting empty array');
 			setFriendRequests([]);
 			return;
 		}
+
+		// try {
+		// 	setLoading(true);
+		// 	console.log(
+		// 		'Fetching profiles for',
+		// 		user.friendRequests.received.length,
+		// 		'friend requests',
+		// 	);
 
 		try {
 			setLoading(true);
@@ -669,12 +682,14 @@ const FriendsRequest = () => {
 					try {
 						console.log('Fetching user profile for:', req.user);
 						const res = await api.get(`/users/${req.user}`);
+
 						console.log(
 							'Fetched profile for',
 							req.user,
 							':',
 							res.data,
 						);
+
 						return { userId: req.user, profile: res.data };
 					} catch (err) {
 						console.error(`Error fetching user ${req.user}`, err);
@@ -703,6 +718,11 @@ const FriendsRequest = () => {
 			await api.post(`/users/${userId}/accept-friend`);
 			console.log('Friend request accepted successfully');
 
+			// // Update local state immediately
+			// setFriendRequests((prev) =>
+			// 	prev.filter((req) => req.userId !== userId),
+			// );
+
 			// Update local state immediately
 			setFriendRequests((prev) =>
 				prev.filter((req) => req.userId !== userId),
@@ -714,6 +734,13 @@ const FriendsRequest = () => {
 				friends: [...(prevUser.friends || []), userId],
 				friendRequests: {
 					...prevUser.friendRequests,
+
+					// 		received:
+					// 			prevUser.friendRequests?.received?.filter(
+					// 				(req) => req.user.toString() !== userId,
+					// 			) || [],
+					// 	},
+					// }));
 					received:
 						prevUser.friendRequests?.received?.filter(
 							(req) => req.user.toString() !== userId,
@@ -725,9 +752,14 @@ const FriendsRequest = () => {
 		} catch (error) {
 			console.error('Error accepting friend request:', error);
 			console.error('Error response:', error.response?.data);
+
+			// const errorMessage =
+			// 	error.response?.data?.errors?.message ||
+			// 	'Failed to accept friend request';
 			const errorMessage =
 				error.response?.data?.errors?.message ||
 				'Failed to accept friend request';
+
 			alert(`Error: ${errorMessage}`);
 		}
 	};
@@ -737,6 +769,10 @@ const FriendsRequest = () => {
 			console.log('Declining friend request from:', userId);
 			await api.post(`/users/${userId}/reject-friend`);
 			console.log('Friend request declined successfully');
+
+			// setFriendRequests((prev) =>
+			// 	prev.filter((req) => req.userId !== userId),
+			// );
 
 			// Update local state immediately
 			setFriendRequests((prev) =>
@@ -748,6 +784,14 @@ const FriendsRequest = () => {
 				...prevUser,
 				friendRequests: {
 					...prevUser.friendRequests,
+
+					// 		received:
+					// 			prevUser.friendRequests?.received?.filter(
+					// 				(req) => req.user.toString() !== userId,
+					// 			) || [],
+					// 	},
+					// }));
+
 					received:
 						prevUser.friendRequests?.received?.filter(
 							(req) => req.user.toString() !== userId,
@@ -759,9 +803,15 @@ const FriendsRequest = () => {
 		} catch (error) {
 			console.error('Error declining friend request:', error);
 			console.error('Error response:', error.response?.data);
+
+			// 			const errorMessage =
+			// 				error.response?.data?.errors?.message ||
+			// 				'Failed to decline friend request';
+
 			const errorMessage =
 				error.response?.data?.errors?.message ||
 				'Failed to decline friend request';
+
 			alert(`Error: ${errorMessage}`);
 		}
 	};

@@ -288,9 +288,48 @@ const searchPosts = async (req, res) => {
 
 const getAllPosts = async (req, res) => {
 	try {
-		const { page = 1, limit = 10, sortBy = 'createdAt' } = req.query;
+		const { page = 1, limit = 10, sortBy = 'createdAt', author } = req.query;
 		const skip = (page - 1) * limit;
-		const query = { visibility: 'public' }; // Only show public posts for non-authenticated users.
+		const userId = req.user?.userId;
+		
+		console.log('getAllPosts - author filter:', author, 'userId:', userId);
+		
+		let query = {};
+		
+		// Handle visibility based on authentication
+		if (!userId) {
+			query.visibility = 'public';
+		} else {
+			const user = await User.findById(userId);
+			
+			// Show all posts user has permission to see
+			query.$or = [
+				{ visibility: 'public' },
+				{ author: userId },
+				{
+					$and: [
+						{ visibility: 'friends' },
+						{ author: { $in: user.friends } },
+					],
+				},
+				{
+					$and: [
+						{ visibility: 'group' },
+						{ group: { $in: user.groups } },
+					],
+				},
+			];
+		}
+		
+		// If author filter is provided, prioritize it over visibility
+		if (author) {
+			// When filtering by author, we want to show their posts regardless of visibility
+			// (since we're viewing their profile)
+			query = { author: author };
+		}
+		
+		console.log('Final query:', JSON.stringify(query, null, 2));
+		
 		const posts = await Post.find(query)
 			.populate(
 				'author',
@@ -302,6 +341,8 @@ const getAllPosts = async (req, res) => {
 			.skip(skip);
 
 		const total = await Post.countDocuments(query);
+		
+		console.log('Found posts:', posts.length, 'Posts authors:', posts.map(p => ({ id: p.author._id, name: p.author.profile.firstName + ' ' + p.author.profile.lastName })));
 
 		res.json({
 			posts,

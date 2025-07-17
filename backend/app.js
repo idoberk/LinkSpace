@@ -17,6 +17,7 @@ app.use('/api/groups', require('./routes/groupRoutes'));
 app.use('/api/comments', require('./routes/commentRoutes'));
 app.use('/api/messages', require('./routes/messageRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/statistics', require('./routes/statisticsRoutes'));
 
 app.use((err, req, res, next) => {
 	console.error(err.stack);
