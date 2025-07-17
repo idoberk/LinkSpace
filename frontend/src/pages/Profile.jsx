@@ -9,45 +9,108 @@ import ProfileEditForm from '../components/ProfileEditForm';
 import ProfileSettingsForm from '../components/ProfileSettingsForm';
 import ChangePasswordForm from '../components/ChangePasswordForm';
 import AlertMessage from '../components/AlertMessage';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { formatDate } from '../utils/timeFormatting';
 
 // TODO: Add to the backend the birthdate to the public profile
 
 const Profile = () => {
-	const { user, setUser } = useUser();
+	const { user: currentUser, setUser } = useUser();
+	const { userId } = useParams();
 	const [showMenu, setShowMenu] = useState(false);
 	const [uploading, setUploading] = useState(false);
 	const [uploadType, setUploadType] = useState(null);
 	const menuRef = useRef(null);
 	const fileInputRef = useRef(null);
-	console.log({ user });
-
+	
+	const [profileUser, setProfileUser] = useState(null);
+	const [loading, setLoading] = useState(false);
+	const [postsLoading, setPostsLoading] = useState(false);
 	const [posts, setPosts] = useState([]);
 	const location = useLocation();
 	const [editMode, setEditMode] = useState(null); // 'inline', 'settings', 'password', null
 	const [alert, setAlert] = useState(null);
+	
+	// Determine if we're viewing our own profile or someone else's
+	const isOwnProfile = !userId || userId === currentUser?._id || userId === currentUser?._id?.toString();
+	const user = isOwnProfile ? currentUser : profileUser;
+	
+	console.log('Profile state - currentUser._id:', currentUser?._id, 'currentUser._id type:', typeof currentUser?._id, 'userId param:', userId, 'userId type:', typeof userId, 'isOwnProfile:', isOwnProfile);
 
 	// Set editMode from navigation state on mount
 	useEffect(() => {
-		if (location.state && location.state.editMode) {
+		if (location.state && location.state.editMode && isOwnProfile) {
 			setEditMode(location.state.editMode);
 		}
 		// eslint-disable-next-line
-	}, []);
+	}, [isOwnProfile]);
+
+	// Fetch profile user data if viewing someone else's profile
+	useEffect(() => {
+		const fetchProfileUser = async () => {
+			if (!isOwnProfile && userId) {
+				setLoading(true);
+				try {
+					const response = await api.get(`/users/${userId}`);
+					setProfileUser(response.data);
+				} catch (error) {
+					console.error('Error fetching profile user:', error);
+					setAlert({
+						type: 'error',
+						message: 'Failed to load user profile'
+					});
+				} finally {
+					setLoading(false);
+				}
+			}
+		};
+
+		fetchProfileUser();
+	}, [userId, isOwnProfile]);
+
+	// Reset edit mode if viewing someone else's profile
+	useEffect(() => {
+		if (!isOwnProfile && editMode) {
+			setEditMode(null);
+		}
+	}, [isOwnProfile, editMode]);
 
 	const fetchPosts = async () => {
+		setPostsLoading(true);
 		try {
-			const response = await api.get('/posts');
+			// When viewing own profile, fetch only own posts
+			console.log('Fetching posts for current user:', currentUser._id);
+			const response = await api.get(`/posts?author=${currentUser._id}`);
+			console.log('Fetched own posts:', response.data.posts);
 			setPosts(response.data.posts);
 		} catch (error) {
 			console.error('Error fetching posts:', error);
+		} finally {
+			setPostsLoading(false);
+		}
+	};
+
+	const fetchUserPosts = async (userId) => {
+		setPostsLoading(true);
+		try {
+			const response = await api.get(`/posts?author=${userId}`);
+			console.log('Fetched user posts for userId:', userId, response.data.posts);
+			setPosts(response.data.posts);
+		} catch (error) {
+			console.error('Error fetching user posts:', error);
+		} finally {
+			setPostsLoading(false);
 		}
 	};
 
 	useEffect(() => {
-		fetchPosts();
-	}, []);
+		console.log('Profile useEffect - isOwnProfile:', isOwnProfile, 'userId:', userId, 'currentUser._id:', currentUser?._id);
+		if (isOwnProfile) {
+			fetchPosts();
+		} else if (userId) {
+			fetchUserPosts(userId);
+		}
+	}, [isOwnProfile, userId]);
 
 	const handlePostSubmit = () => {
 		fetchPosts();
@@ -67,12 +130,14 @@ const Profile = () => {
 	}, []);
 
 	const handleAddProfilePicture = () => {
+		if (!isOwnProfile) return;
 		setUploadType('avatar');
 		setShowMenu(false);
 		fileInputRef.current.click();
 	};
 
 	const handleAddCoverPhoto = () => {
+		if (!isOwnProfile) return;
 		setUploadType('coverPhoto');
 		setShowMenu(false);
 		fileInputRef.current.click();
@@ -80,6 +145,10 @@ const Profile = () => {
 
 	const handleFileChange = async (e) => {
 		if (!e.target.files.length) return;
+		if (!isOwnProfile) {
+			console.error('Cannot upload files for other users');
+			return;
+		}
 		setUploading(true);
 		const file = e.target.files[0];
 		const formData = new FormData();
@@ -127,6 +196,27 @@ const Profile = () => {
 		}
 	};
 
+	if (loading) {
+		return (
+			<div className='bg-white min-h-screen flex items-center justify-center'>
+				<div className='text-center'>
+					<div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto'></div>
+					<p className='mt-4 text-gray-600'>Loading profile...</p>
+				</div>
+			</div>
+		);
+	}
+
+	if (!user) {
+		return (
+			<div className='bg-white min-h-screen flex items-center justify-center'>
+				<div className='text-center'>
+					<p className='text-gray-600'>User not found</p>
+				</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className='bg-white min-h-screen'>
 			<div className='relative w-full h-100 rounded-b-lg'>
@@ -144,7 +234,7 @@ const Profile = () => {
 						/>
 					) : (
 						<div className='w-full h-full flex mt-4 items-center justify-center bg-gray-200 text-gray-500'>
-							Add your first cover photo
+							{isOwnProfile ? 'Add your first cover photo' : 'No cover photo'}
 						</div>
 					)}
 				</div>
@@ -157,84 +247,105 @@ const Profile = () => {
 						width={250}
 						height={250}
 					/>
-					<div
-						className='absolute left-1/2 bottom-0 transform -translate-x-1/2 translate-y-2\3'
-						ref={menuRef}>
-						<FeedButton
-							className='px-4 py-2 rounded-full'
-							onClick={() => setShowMenu(!showMenu)}
-							disabled={uploading}>
-							{uploading ? '...' : '+'}
-						</FeedButton>
-						{showMenu && (
-							<div className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[200px] z-10'>
-								<button
-									onClick={handleAddProfilePicture}
-									className='w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2'>
-									<span>Add profile picture</span>
-								</button>
-								<hr className='w-full border-gray-200' />
-								<button
-									onClick={handleAddCoverPhoto}
-									className='w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2'>
-									<span>Add cover photo</span>
-								</button>
-							</div>
-						)}
-					</div>
+					{isOwnProfile && (
+						<div
+							className='absolute left-1/2 bottom-0 transform -translate-x-1/2 translate-y-2\3'
+							ref={menuRef}>
+							<FeedButton
+								className='px-4 py-2 rounded-full'
+								onClick={() => setShowMenu(!showMenu)}
+								disabled={uploading}>
+								{uploading ? '...' : '+'}
+							</FeedButton>
+							{showMenu && (
+								<div className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg py-2 min-w-[200px] z-10'>
+									<button
+										onClick={handleAddProfilePicture}
+										className='w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2'>
+										<span>Add profile picture</span>
+									</button>
+									<hr className='w-full border-gray-200' />
+									<button
+										onClick={handleAddCoverPhoto}
+										className='w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2'>
+										<span>Add cover photo</span>
+									</button>
+								</div>
+							)}
+						</div>
+					)}
 				</div>
 			</div>
-			<input
-				type='file'
-				accept='image/*'
-				style={{ display: 'none' }}
-				ref={fileInputRef}
-				onChange={handleFileChange}
-			/>
+			{isOwnProfile && (
+				<input
+					type='file'
+					accept='image/*'
+					style={{ display: 'none' }}
+					ref={fileInputRef}
+					onChange={handleFileChange}
+				/>
+			)}
 
 			<div className='flex justify-center items-center flex-col mt-32'>
 				<h1 className='text-2xl font-bold '>
 					{user?.profile?.firstName} {user?.profile?.lastName}
 				</h1>
-				<div className='flex gap-2 mt-4'>
-					<button
-						className={`px-4 py-2 rounded ${
-							editMode === 'inline'
-								? 'bg-blue-600 text-white'
-								: 'bg-gray-200 text-gray-700'
-						}`}
-						onClick={() =>
-							setEditMode(editMode === 'inline' ? null : 'inline')
-						}>
-						Edit Inline
-					</button>
-					<button
-						className={`px-4 py-2 rounded ${
-							editMode === 'settings'
-								? 'bg-blue-600 text-white'
-								: 'bg-gray-200 text-gray-700'
-						}`}
-						onClick={() =>
-							setEditMode(
-								editMode === 'settings' ? null : 'settings',
-							)
-						}>
-						Settings
-					</button>
-					<button
-						className={`px-4 py-2 rounded ${
-							editMode === 'password'
-								? 'bg-blue-600 text-white'
-								: 'bg-gray-200 text-gray-700'
-						}`}
-						onClick={() =>
-							setEditMode(
-								editMode === 'password' ? null : 'password',
-							)
-						}>
-						Change Password
-					</button>
-				</div>
+				{!isOwnProfile && (
+					<div className='text-center mt-2'>
+						<div className='bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4'>
+							<p className='text-sm text-blue-700 font-medium'>
+								Viewing {user?.profile?.firstName}'s profile
+							</p>
+						</div>
+					</div>
+				)}
+				{isOwnProfile && (
+					<div className='flex gap-2 mt-4'>
+						<button
+							className={`px-4 py-2 rounded ${
+								editMode === 'inline'
+									? 'bg-blue-600 text-white'
+									: 'bg-gray-200 text-gray-700'
+							}`}
+							onClick={() => {
+								if (isOwnProfile) {
+									setEditMode(editMode === 'inline' ? null : 'inline');
+								}
+							}}>
+							Edit Inline
+						</button>
+						<button
+							className={`px-4 py-2 rounded ${
+								editMode === 'settings'
+									? 'bg-blue-600 text-white'
+									: 'bg-gray-200 text-gray-700'
+							}`}
+							onClick={() => {
+								if (isOwnProfile) {
+									setEditMode(
+										editMode === 'settings' ? null : 'settings',
+									);
+								}
+							}}>
+							Settings
+						</button>
+						<button
+							className={`px-4 py-2 rounded ${
+								editMode === 'password'
+									? 'bg-blue-600 text-white'
+									: 'bg-gray-200 text-gray-700'
+							}`}
+							onClick={() => {
+								if (isOwnProfile) {
+									setEditMode(
+										editMode === 'password' ? null : 'password',
+									);
+								}
+							}}>
+							Change Password
+						</button>
+					</div>
+				)}
 				{alert && (
 					<AlertMessage
 						type={alert.type}
@@ -242,19 +353,21 @@ const Profile = () => {
 						onClose={() => setAlert(null)}
 					/>
 				)}
-				<div className='w-full max-w-lg mt-4'>
-					{editMode === 'inline' && (
-						<ProfileEditForm onClose={() => setEditMode(null)} />
-					)}
-					{editMode === 'settings' && (
-						<ProfileSettingsForm
-							onClose={() => setEditMode(null)}
-						/>
-					)}
-					{editMode === 'password' && (
-						<ChangePasswordForm onClose={() => setEditMode(null)} />
-					)}
-				</div>
+				{isOwnProfile && editMode && (
+					<div className='w-full max-w-lg mt-4'>
+						{editMode === 'inline' && (
+							<ProfileEditForm onClose={() => setEditMode(null)} />
+						)}
+						{editMode === 'settings' && (
+							<ProfileSettingsForm
+								onClose={() => setEditMode(null)}
+							/>
+						)}
+						{editMode === 'password' && (
+							<ChangePasswordForm onClose={() => setEditMode(null)} />
+						)}
+					</div>
+				)}
 			</div>
 			<hr className='w-full my-4 border-gray-200' />
 			<div className='flex flex-col gap-1 ml-2'>
@@ -271,20 +384,48 @@ const Profile = () => {
 				</h2>
 			</div>
 			<hr className='w-full my-4 border-gray-200' />
-			<div className='h-screen w-4/5 mx-auto'>
-				<div className='flex justify-center items-center'>
-					<SubmitPostItem onPostSubmit={handlePostSubmit} />
+			{/* Only show posts section when not in edit mode */}
+			{!editMode && (
+				<div className='h-screen w-4/5 mx-auto'>
+					{isOwnProfile && (
+						<div className='flex justify-center items-center mb-6'>
+							<SubmitPostItem onPostSubmit={handlePostSubmit} />
+						</div>
+					)}
+					
+					{/* Posts Section */}
+					<div className='mb-6'>
+						<h2 className='text-xl font-semibold text-gray-800 mb-4'>
+							{isOwnProfile ? 'Your Posts' : `${user?.profile?.firstName}'s Posts`}
+						</h2>
+						{postsLoading ? (
+							<div className='text-center py-8'>
+								<div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto'></div>
+								<p className='mt-2 text-gray-500'>Loading posts...</p>
+							</div>
+						) : posts.length === 0 ? (
+							<div className='text-center py-8 text-gray-500'>
+								<p>
+									{isOwnProfile 
+										? 'You haven\'t posted anything yet.' 
+										: `${user?.profile?.firstName} hasn\'t posted anything yet.`
+									}
+								</p>
+							</div>
+						) : (
+							<div className='space-y-4'>
+								{posts.map((post) => (
+									<Post
+										key={post._id}
+										post={post}
+										onPostChange={isOwnProfile ? fetchPosts : () => fetchUserPosts(userId)}
+									/>
+								))}
+							</div>
+						)}
+					</div>
 				</div>
-				{/* {posts
-					.filter((post) => post.author._id === user._id)
-					.map((post) => (
-						<Post
-							key={post._id}
-							post={post}
-							onPostChange={fetchPosts}
-						/>
-					))} */}
-			</div>
+			)}
 		</div>
 	);
 };

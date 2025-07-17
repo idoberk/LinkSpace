@@ -4,40 +4,22 @@ import api from '../lib/axios';
 import { useUser } from '../hooks/useUser';
 
 const FriendsDisplay = () => {
-	// const { user } = useUser();
-	// const [friends, setFriends] = useState([]);
-	// const [loading, setLoading] = useState(false);
-
-	// const fetchData = async () => {
-	// 	if (!user?.friends || user.friends.length === 0) {
-	// 		setFriends([]);
-	// 		return;
 
 	const { user } = useUser();
-	const [friendsID] = useState(user?.friends || []);
 	const [friends, setFriends] = useState([]);
 	const [loading, setLoading] = useState(false);
 
 	useEffect(() => {
 		const fetchProfiles = async () => {
+			if (!user?.friends || user.friends.length === 0) {
+				setFriends([]);
+				return;
+			}
+
 			try {
 				setLoading(true);
-				// const fetchedProfiles = await Promise.all(
-				// 	friendsID.map(async (req) => {
-				// 		try {
-				// 			const res = await api.get(`/users/${req.user}`);
-				// 			return { userId: req.user, profile: res.data };
-				// 		} catch (err) {
-				// 			console.error(
-				// 				`Error fetching user ${req.user}`,
-				// 				err,
-				// 			);
-				// 			return null;
-				// 		}
-				// 	}),
-				// );
 				const fetchedProfiles = await Promise.all(
-					friendsID.map(async (friendId) => {
+					user.friends.map(async (friendId) => {
 						try {
 							const res = await api.get(`/users/${friendId}`);
 
@@ -63,14 +45,8 @@ const FriendsDisplay = () => {
 			}
 		};
 
-		if (friendsID.length > 0) {
-			fetchProfiles();
-		}
-	}, [friendsID]);
-
-	// useEffect(() => {
-	// 	fetchData();
-	// }, [user]);
+		fetchProfiles();
+	}, [user?.friends]);
 
 	return (
 		<div>

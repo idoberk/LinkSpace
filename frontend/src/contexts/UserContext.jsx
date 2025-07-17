@@ -9,7 +9,14 @@ import { UserContext } from './UserContext.js';
 import { createSocket } from '../lib/socket';
 
 export const UserProvider = ({ children }) => {
-	const [user, setUserState] = useState(() => getUser());
+	const [user, setUserState] = useState(() => {
+		try {
+			return getUser();
+		} catch (error) {
+			console.error('Error initializing user state:', error);
+			return null;
+		}
+	});
 	const [socket, setSocket] = useState(null); // <-- Add this
 	const socketRef = useRef(null);
 
@@ -22,6 +29,12 @@ export const UserProvider = ({ children }) => {
 			removeUser();
 		}
 	}, []);
+
+	// Update user function - alias for setUser for clarity
+	const updateUser = useCallback((newUserData) => {
+		console.log('Updating user with:', newUserData);
+		setUser(newUserData);
+	}, [setUser]);
 
 	// Logout function clears user and token, and disconnects socket
 	const logout = useCallback(() => {
@@ -72,7 +85,7 @@ export const UserProvider = ({ children }) => {
 	}, [user]);
 
 	return (
-		<UserContext.Provider value={{ user, setUser, logout, socket }}>
+		<UserContext.Provider value={{ user, setUser, updateUser, logout, socket }}>
 			{children}
 		</UserContext.Provider>
 	);

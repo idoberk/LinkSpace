@@ -327,6 +327,8 @@ const removeFriend = async (req, res) => {
 	}
 };
 
+
+
 module.exports = {
 	getAllUsers,
 	getUserById,

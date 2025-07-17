@@ -44,6 +44,7 @@ const App = () => {
 						<Route element={<ProtectedLayout />}>
 							<Route path='/home' element={<Home />} />
 							<Route path='/profile' element={<Profile />} />
+							<Route path='/profile/:userId' element={<Profile />} />
 							<Route path='/groups' element={<GroupsDisplay />} />
 							<Route
 								path='/create-group'
