@@ -40,6 +40,12 @@ const SideBar = () => {
 				}}
 			/>
 			<SideBarItem
+				text='Canvas'
+				onClick={() => {
+					navigate('/canvas');
+				}}
+			/>
+			<SideBarItem
 				icon={<InsightsRoundedIcon />}
 				text='Insights'
 				onClick={() => navigate('/statistics')}

@@ -14,6 +14,7 @@ import PublicOnlyRoute from './components/PublicOnlyRoute';
 import { UserProvider } from './contexts/UserContext.jsx';
 import Messages from './pages/Messages';
 import ProtectedLayout from './components/ProtectedLayout';
+import Canvas from './pages/Canvas';
 
 import Users from './pages/Users';
 
@@ -45,6 +46,7 @@ const App = () => {
 							/>
 							<Route path='/messages' element={<Messages />} />
 							<Route path='/users' element={<Users />} />
+							<Route path='canvas' element={<Canvas />} />
 						</Route>
 					</Route>
 				</Routes>
