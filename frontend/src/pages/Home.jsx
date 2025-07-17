@@ -9,7 +9,7 @@ const Home = () => {
 	console.log({ user });
 	return (
 		<div className='bg-white min-h-screen'>
-			<div className='flex flex-row h-[calc(100vh-4rem)] mt-16'>
+			<div className='flex flex-row h-[calc(100vh-4rem)]'>
 				{/* Left sidebar */}
 				<div className='w-1/5 flex flex-col h-full overflow-y-auto'>
 					<SideBar user={user} />

@@ -97,6 +97,7 @@ import api from '../lib/axios';
 import GroupCard from '../components/GroupCard';
 import CreateGroup from '../components/CreateGroup';
 import { useUser } from '../hooks/useUser';
+import GroupSearch from '../components/GroupSearch';
 
 const Groups = () => {
 	const { user, setUser } = useUser();
@@ -130,7 +131,7 @@ const Groups = () => {
 				}
 			});
 
-			const groups = (await Promise.all(groupPromises)).filter(Boolean); // מסנן null
+			const groups = (await Promise.all(groupPromises)).filter(Boolean);
 			setMyGroups(groups);
 		} catch (error) {
 			console.error(
@@ -142,9 +143,18 @@ const Groups = () => {
 			setLoading(false);
 		}
 	};
+	const handleGroupEdit = (groupId, updatedData) => {
+		setMyGroups((prev) =>
+			prev.map((group) =>
+				group._id === groupId ? { ...group, ...updatedData } : group,
+			),
+		);
+	};
 
 	const handleLeaveGroup = async (groupId) => {
 		const currentGroup = myGroups.find((group) => group._id === groupId);
+		console.log('currentGroup.creator:', currentGroup.creator);
+		console.log('user._id:', user._id);
 		if (currentGroup && currentGroup.creator._id === user._id) {
 			if (
 				window.confirm(
@@ -176,8 +186,45 @@ const Groups = () => {
 				groups: user.groups.filter((id) => id !== groupId),
 			});
 		} catch (error) {
-			alert('Error leaving group');
-			console.error('Error leaving group:', error);
+			console.error(
+				'Error leaving group:',
+				error.response?.data || error,
+			);
+			alert(
+				error.response?.data?.errors?.message || 'Error leaving group',
+			);
+		}
+	};
+	const handleDeleteGroup = async (groupId) => {
+		if (window.confirm('Are you sure you want to delete this group?')) {
+			try {
+				await api.delete(`/groups/${groupId}`);
+				setMyGroups(myGroups.filter((group) => group._id !== groupId));
+				setUser({
+					...user,
+					groups: user.groups.filter((id) => id !== groupId),
+				});
+			} catch (error) {
+				alert('Error deleting group');
+				console.error('Error deleting group:', error);
+			}
+		}
+	};
+	const handleJoinGroup = async (groupId) => {
+		try {
+			const res = await api.post(`/groups/${groupId}/join`);
+			// if (res.data.status === 'approved') {
+			// 	// setUser({
+			// 	// 	...user,
+			// 	// 	groups: user.groups.filter((id) => id !== groupId),
+			// 	// });
+
+			// 	await fetchMyGroups();
+			// }
+			alert(res.data.message);
+		} catch (error) {
+			alert('Error joining group');
+			console.error('Error joining group:', error);
 		}
 	};
 
@@ -229,10 +276,32 @@ const Groups = () => {
 								key={group._id}
 								group={group}
 								onLeave={handleLeaveGroup}
-								isJoined={true}
+								// isJoined={true}
+								onJoin={handleJoinGroup}
+								onDelete={handleDeleteGroup}
+								onEdit={handleGroupEdit}
+								showEdit={true}
 							/>
 						))
 					) : (
+						// myGroups.map((group) => {
+						// 	const isCreator =
+						// 		typeof group.creator === 'object'
+						// 			? group.creator._id === user._id
+						// 			: group.creator === user._id;
+
+						// 	return (
+						// 		<GroupCard
+						// 			key={group._id}
+						// 			group={group}
+						// 			onJoin={handleJoinGroup}
+						// 			onLeave={handleLeaveGroup}
+						// 			onDelete={handleDeleteGroup}
+						// 			isJoined={true}
+						// 			isCreator={isCreator}
+						// 		/>
+						// );
+						// })
 						<p className='text-gray-500'>
 							You haven't joined any groups yet.
 						</p>

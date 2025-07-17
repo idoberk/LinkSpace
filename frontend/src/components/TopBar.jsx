@@ -90,14 +90,14 @@ const TopBar = () => {
 				</Link>
 			</span>
 			<span className='top-bar-center'>
-				<span className='search-bar flex justify-start items-center bg-white rounded-full p-2 w-80'>
+				{/* <span className='search-bar flex justify-start items-center bg-white rounded-full p-2 w-80'>
 					<SearchOutlinedIcon className='ml-2' />
 					<input
 						className='ml-2 bg-transparent outline-none'
 						type='text'
 						placeholder='Search'
 					/>
-				</span>
+				</span> */}
 			</span>
 			<div className='top-bar-right flex justify-center items-center'>
 				<span className='mr-3 font-bold text-gray-800 text-xl self-center'>
@@ -146,7 +146,7 @@ const TopBar = () => {
 						</div>
 					)}
 				</div>
-				<NotificationsOutlinedIcon className='mr-5 hover:bg-white rounded-full hover:cursor-pointer transition' />
+				{/* <NotificationsOutlinedIcon className='mr-5 hover:bg-white rounded-full hover:cursor-pointer transition' /> */}
 				<FeedButton
 					onClick={handleLogout}
 					className='hover:bg-blue-100'

@@ -248,7 +248,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import TopBar from './TopBar';
 import Input from './Input';
 import api from '../lib/axios';
@@ -257,7 +257,7 @@ import FeedButton from './FeedButton';
 import { useUser } from '../hooks/useUser';
 
 const CreateGroup = () => {
-	const navigate = useNavigate();
+	// const navigate = useNavigate();
 	const { user, setUser } = useUser();
 	const [form, setForm] = useState({
 		name: '',
@@ -308,7 +308,11 @@ const CreateGroup = () => {
 			formData.append('description', form.description);
 			formData.append('category', form.category);
 			formData.append('privacy', form.privacy);
-			formData.append('settings', JSON.stringify({}));
+			// formData.append('settings', JSON.stringify({}));
+			formData.append(
+				'settings',
+				JSON.stringify({ joiningRequiresApproval: false }),
+			);
 
 			if (coverImage) {
 				formData.append('coverImage', coverImage);
@@ -319,6 +323,11 @@ const CreateGroup = () => {
 					'Content-Type': 'multipart/form-data',
 				},
 			});
+			if (res.status === 200 || res.status === 201) {
+				await api.put(`/groups/${res.data.group._id}`, {
+					settings: { joiningRequiresApproval: false },
+				});
+			}
 			const newGroup = res.data.group;
 
 			setUser({
