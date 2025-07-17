@@ -1,3 +1,4 @@
+import ForumRoundedIcon from '@mui/icons-material/ForumRounded';
 import React, { useState } from 'react';
 import api from '../lib/axios';
 import FeedButton from './FeedButton';
@@ -15,14 +16,6 @@ const CommentForm = ({ postId, onCommentAdded }) => {
 		}
 		setLoading(true);
 		setError('');
-		// try {
-		// 	const res = await api.post(`/comments/${postId}`, {
-		// 		content,
-		// 	});
-		// 	setContent('');
-		// 	if (onCommentAdded) {
-		// 		onCommentAdded(res.data.comment);
-		// 	}
 		try {
 			await api.post(`/comments/${postId}`, { content });
 			setContent('');
@@ -47,8 +40,9 @@ const CommentForm = ({ postId, onCommentAdded }) => {
 			/>
 			<FeedButton
 				type='submit'
-				className='bg-blue-500 text-white rounded px-4 py-2'
+				className='w-35  rounded px-4 py-2'
 				disabled={loading}>
+				<ForumRoundedIcon className='text-gray-500 mr-2' />
 				{loading ? 'Sending...' : 'Comment'}
 			</FeedButton>
 			{error && <div className='text-red-500'>{error}</div>}

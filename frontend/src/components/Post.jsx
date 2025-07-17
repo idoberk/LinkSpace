@@ -194,14 +194,6 @@ const Post = ({ post, onPostChange }) => {
 
 	const author = post.author;
 
-	// const handleCommentAdded = (newComment) => {
-	// 	setComments((prevComments) => [newComment, ...prevComments]);
-	// 	try {
-	// 		const res = await api.get(`/comments/${postId}`, {
-	// 			content,
-	// 		}
-	// 	onPostChange();
-	// };
 	const fetchComments = async () => {
 		setLoadingComments(true);
 		try {
@@ -250,6 +242,11 @@ const Post = ({ post, onPostChange }) => {
 
 	return (
 		<div className='border border-gray-200 p-4 rounded-2xl mt-2'>
+			{post.visibility === 'group' && post.group && post.group.name && (
+				<div className='text-blue-300 font-bold text-md mb-1'>
+					Group :{post.group.name}
+				</div>
+			)}
 			<div className='flex flex-row gap-2 items-center mb-2'>
 				<ProfilePicture
 					width={50}
@@ -341,10 +338,10 @@ const Post = ({ post, onPostChange }) => {
 					<RecommendRoundedIcon className='text-gray-500 mr-2' />
 					Like
 				</FeedButton>
-				<FeedButton className='justify-center items-center border border-gray-200 rounded-full'>
+				{/* <FeedButton className='justify-center items-center border border-gray-200 rounded-full'>
 					<ForumRoundedIcon className='text-gray-500 mr-2' />
 					Comment
-				</FeedButton>
+				</FeedButton> */}
 				{user._id === post.author._id && (
 					<DeleteOutlineRoundedIcon
 						className='text-gray-500 ml-auto cursor-pointer hover:bg-blue-100 rounded-full'

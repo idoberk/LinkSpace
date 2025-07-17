@@ -2,37 +2,66 @@ import SubmitPostItem from './SubmitPostItem';
 import Post from './Post';
 import { useState, useEffect } from 'react';
 import api from '../lib/axios';
-
-// TODO: Fix the logout bug, when coming back to the home page, it still shows the page
+import { useUser } from '../hooks/useUser';
+import { group } from 'd3';
 
 const Feed = () => {
+	const { user } = useUser();
 	const [posts, setPosts] = useState([]);
+	const [loading, setLoading] = useState(false);
 
 	const fetchPosts = async () => {
+		setLoading(true);
 		try {
-			const response = await api.get('/posts');
+			const response = await api.get('/posts/search', {
+				params: { visibility: group },
+			});
 			setPosts(response.data.posts);
 		} catch (error) {
 			console.error('Error fetching posts:', error);
+			setPosts([]);
+		} finally {
+			setLoading(false);
 		}
 	};
+	const filteredPosts = posts.filter((post) => {
+		if (post.visibility === 'public') return true;
+
+		if (post.visibility === 'group') {
+			const groupId =
+				typeof post.group === 'string' ? post.group : post.group?._id;
+
+			return user.groups.includes(groupId);
+		}
+
+		return false;
+	});
 
 	useEffect(() => {
-		fetchPosts();
-	}, []);
+		if (user) {
+			fetchPosts();
+		}
+	}, [user]);
 
 	const handlePostSubmit = () => {
 		fetchPosts();
 	};
-
 	return (
 		<div className='h-screen '>
 			<div className='flex justify-center items-center'>
 				<SubmitPostItem onPostSubmit={handlePostSubmit} />
 			</div>
-			{posts.map((post) => (
-				<Post key={post._id} post={post} onPostChange={fetchPosts} />
-			))}
+			{loading ? (
+				<div className='text-center mt-10'>Loading...</div>
+			) : (
+				filteredPosts.map((post) => (
+					<Post
+						key={post._id}
+						post={post}
+						onPostChange={fetchPosts}
+					/>
+				))
+			)}
 		</div>
 	);
 };

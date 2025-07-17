@@ -28,17 +28,51 @@ const SubmitPostItem = ({ onPostSubmit }) => {
 		setSelectedGroup('');
 	};
 
+	// useEffect(() => {
+	// 	const fetchUserGroups = async () => {
+	// 		try {
+	// 			// const response = await api.get('/groups');
+
+	// 			setUserGroups(response.data.groups);
+	// 		} catch (error) {
+	// 			console.error('Error fetching groups:', error);
+	// 		}
+	// 	};
+	// 	fetchUserGroups();
+	// }, []);
+
 	useEffect(() => {
-		const fetchUserGroups = async () => {
-			try {
-				const response = await api.get('/groups');
-				setUserGroups(response.data.groups);
-			} catch (error) {
-				console.error('Error fetching groups:', error);
-			}
-		};
-		fetchUserGroups();
-	}, []);
+		fetchMyGroups();
+	}, [user]);
+	const fetchMyGroups = async () => {
+		if (!user || !user.groups || user.groups.length === 0) {
+			setUserGroups([]);
+			return;
+		}
+		try {
+			const groupPromises = user.groups.map(async (groupId) => {
+				try {
+					const res = await api.get(`/groups/${groupId}`);
+					return res.data.group;
+				} catch (error) {
+					console.warn(
+						`Group ${groupId} not found or error:`,
+						error.response?.data,
+					);
+					return null;
+				}
+			});
+
+			const groups = (await Promise.all(groupPromises)).filter(Boolean);
+			setUserGroups(groups);
+		} catch (error) {
+			console.error(
+				'Group fetch error:',
+				error.response?.data || error.message,
+			);
+			setUserGroups([]);
+		}
+	};
 
 	const handleVisibilityChange = (e) => {
 		const newVisibility = e.target.value;
@@ -72,6 +106,10 @@ const SubmitPostItem = ({ onPostSubmit }) => {
 		const formData = new FormData();
 		formData.append('content', content);
 		formData.append('tags', tags.join(','));
+		formData.append('visibility', visibility);
+		if (visibility === 'group') {
+			formData.append('groupId', selectedGroup);
+		}
 		if (media) formData.append('media', media);
 
 		try {
@@ -144,7 +182,6 @@ const SubmitPostItem = ({ onPostSubmit }) => {
 					value={visibility}
 					onChange={handleVisibilityChange}>
 					<option value='public'>Public</option>
-					<option value='friends'>Friends Only</option>
 					<option value='group'>Group</option>
 					<option value='private'>Private</option>
 				</select>

@@ -10,8 +10,6 @@ import CreateGroup from './CreateGroup';
 
 const GroupsDisplay = () => {
 	const navigate = useNavigate();
-	// const user = JSON.parse(localStorage.getItem('user'));
-
 	const { user } = useUser();
 	const myGroups = user?.groups || [];
 	// const location = useLocation();
