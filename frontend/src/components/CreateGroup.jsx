@@ -43,9 +43,9 @@ const CreateGroup = () => {
 		setForm((prev) => ({ ...prev, [name]: value }));
 	};
 
-	const handleFileChange = (e) => {
-		setCoverImage(e.target.files[0]);
-	};
+	// const handleFileChange = (e) => {
+	// 	setCoverImage(e.target.files[0]);
+	// };
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
