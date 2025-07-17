@@ -7,7 +7,6 @@ import FeedButton from './FeedButton';
 import { useUser } from '../hooks/useUser';
 
 const CreateGroup = () => {
-	// const navigate = useNavigate();
 	const { user, setUser } = useUser();
 	const [form, setForm] = useState({
 		name: '',
@@ -15,7 +14,6 @@ const CreateGroup = () => {
 		category: 'other',
 		privacy: 'public',
 	});
-	const [coverImage, setCoverImage] = useState(null);
 	const [loading, setLoading] = useState(false);
 	const [alert, setAlert] = useState(null);
 
@@ -43,10 +41,6 @@ const CreateGroup = () => {
 		setForm((prev) => ({ ...prev, [name]: value }));
 	};
 
-	// const handleFileChange = (e) => {
-	// 	setCoverImage(e.target.files[0]);
-	// };
-
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setLoading(true);
@@ -58,15 +52,10 @@ const CreateGroup = () => {
 			formData.append('description', form.description);
 			formData.append('category', form.category);
 			formData.append('privacy', form.privacy);
-			// formData.append('settings', JSON.stringify({}));
 			formData.append(
 				'settings',
 				JSON.stringify({ joiningRequiresApproval: false }),
 			);
-
-			if (coverImage) {
-				formData.append('coverImage', coverImage);
-			}
 
 			const res = await api.post('/groups', formData, {
 				headers: {
@@ -103,9 +92,9 @@ const CreateGroup = () => {
 	};
 
 	return (
-		<div className='bg-gray-50 min-h-screen'>
+		<div>
 			<TopBar />
-			<div className='pt-20 px-4 max-w-2xl mx-auto'>
+			<div className='pt-5 px-4 max-w-2xl mx-auto'>
 				{alert && (
 					<AlertMessage
 						type={alert.type}
@@ -177,28 +166,10 @@ const CreateGroup = () => {
 								onChange={handleInputChange}
 								className='w-full px-4 py-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-50'
 								required>
-								<option value='public'>
-									public
-									{/* Public - Anyone can see and join */}
-								</option>
-								<option value='private'>
-									private
-									{/* Private - Only members can see content */}
-								</option>
+								<option value='public'>public</option>
+								<option value='private'>private</option>
 							</select>
 						</div>
-
-						{/* <div>
-							<label className='block text-sm font-medium text-gray-700 mb-2'>
-								Cover Image (Optional)
-							</label>
-							<input
-								type='file'
-								accept='image/*'
-								onChange={handleFileChange}
-								className='w-full px-4 py-2 border rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-50'
-							/>
-						</div> */}
 
 						<div className='flex gap-4'>
 							<FeedButton type='submit' disabled={loading}>

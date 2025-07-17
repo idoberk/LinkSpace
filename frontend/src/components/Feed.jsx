@@ -4,17 +4,21 @@ import { useState, useEffect } from 'react';
 import api from '../lib/axios';
 import { useUser } from '../hooks/useUser';
 import { group } from 'd3';
+import { useLocation } from 'react-router-dom';
 
 const Feed = () => {
 	const { user } = useUser();
 	const [posts, setPosts] = useState([]);
 	const [loading, setLoading] = useState(false);
+	const location = useLocation();
+	const params = new URLSearchParams(location.search);
+	const searchTerm = params.get('search') || '';
 
 	const fetchPosts = async () => {
 		setLoading(true);
 		try {
 			const response = await api.get('/posts/search', {
-				params: { visibility: group },
+				params: { visibility: group, content: searchTerm },
 			});
 			setPosts(response.data.posts);
 		} catch (error) {
@@ -41,7 +45,7 @@ const Feed = () => {
 		if (user) {
 			fetchPosts();
 		}
-	}, [user]);
+	}, [user, searchTerm]);
 
 	const handlePostSubmit = () => {
 		fetchPosts();

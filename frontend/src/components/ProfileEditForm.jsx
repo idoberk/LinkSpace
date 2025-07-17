@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useUser } from '../hooks/useUser';
 import api from '../lib/axios';
 import Input from './Input';
-import Button from './Button';
+import FeedButton from './FeedButton';
 import AlertMessage from './AlertMessage';
 
 const ProfileEditForm = ({ onClose }) => {
@@ -113,18 +113,18 @@ const ProfileEditForm = ({ onClose }) => {
 					inputStyle='w-full px-4 py-2 border rounded-lg border-gray-300'
 				/>
 				<div className='flex gap-2 justify-end'>
-					<Button
+					<FeedButton
 						type='button'
 						onClick={onClose}
 						className='bg-gray-200 text-gray-700'>
 						Cancel
-					</Button>
-					<Button
+					</FeedButton>
+					<FeedButton
 						type='submit'
 						disabled={loading}
 						className='bg-blue-600 text-white'>
 						{loading ? 'Saving...' : 'Save Changes'}
-					</Button>
+					</FeedButton>
 				</div>
 			</form>
 		</div>

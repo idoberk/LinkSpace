@@ -120,14 +120,6 @@ const Groups = () => {
 	const handleJoinGroup = async (groupId) => {
 		try {
 			const res = await api.post(`/groups/${groupId}/join`);
-			// if (res.data.status === 'approved') {
-			// 	// setUser({
-			// 	// 	...user,
-			// 	// 	groups: user.groups.filter((id) => id !== groupId),
-			// 	// });
-
-			// 	await fetchMyGroups();
-			// }
 			alert(res.data.message);
 		} catch (error) {
 			alert('Error joining group');
@@ -191,24 +183,6 @@ const Groups = () => {
 							/>
 						))
 					) : (
-						// myGroups.map((group) => {
-						// 	const isCreator =
-						// 		typeof group.creator === 'object'
-						// 			? group.creator._id === user._id
-						// 			: group.creator === user._id;
-
-						// 	return (
-						// 		<GroupCard
-						// 			key={group._id}
-						// 			group={group}
-						// 			onJoin={handleJoinGroup}
-						// 			onLeave={handleLeaveGroup}
-						// 			onDelete={handleDeleteGroup}
-						// 			isJoined={true}
-						// 			isCreator={isCreator}
-						// 		/>
-						// );
-						// })
 						<p className='text-gray-500'>
 							You haven't joined any groups yet.
 						</p>
@@ -221,11 +195,5 @@ const Groups = () => {
 		</div>
 	);
 };
-
-{
-	/* // <div>
-		// 	<CreateGroup />
-		// </div> */
-}
 
 export default Groups;

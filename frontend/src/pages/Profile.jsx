@@ -72,11 +72,11 @@ const Profile = () => {
 		fileInputRef.current.click();
 	};
 
-	const handleAddCoverPhoto = () => {
-		setUploadType('coverPhoto');
-		setShowMenu(false);
-		fileInputRef.current.click();
-	};
+	// const handleAddCoverPhoto = () => {
+	// 	setUploadType('coverPhoto');
+	// 	setShowMenu(false);
+	// 	fileInputRef.current.click();
+	// };
 
 	const handleFileChange = async (e) => {
 		if (!e.target.files.length) return;
@@ -129,24 +129,25 @@ const Profile = () => {
 
 	return (
 		<div className='bg-white min-h-screen'>
-			<div className='relative w-full h-100 rounded-b-lg'>
+			{/* <div className='relative w-full h-100 rounded-b-lg'> */}
+			<div className='relative w-full h-30 rounded-b-lg'>
 				<div
 					className='overflow-hidden h-full w-full'
 					style={{
 						clipPath:
 							'polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%)',
 					}}>
-					{user?.profile?.coverImage ? (
+					{/* {user?.profile?.coverImage ? (
 						<img
 							alt='cover photo'
 							src={user?.profile.coverImage}
 							className='w-full h-full object-cover'
 						/>
-					) : (
-						<div className='w-full h-full flex mt-4 items-center justify-center bg-gray-200 text-gray-500'>
-							Add your first cover photo
-						</div>
-					)}
+					) : ( */}
+					{/* <div className='w-full h-full flex  items-center justify-center bg-gray-200 text-gray-500'>
+						Add your first cover photo
+					</div> */}
+					{/* )} */}
 				</div>
 				<div className='absolute left-1/2 bottom-0 transform -translate-x-1/2 translate-y-1/2'>
 					<ProfilePicture
@@ -174,11 +175,11 @@ const Profile = () => {
 									<span>Add profile picture</span>
 								</button>
 								<hr className='w-full border-gray-200' />
-								<button
+								{/* <button
 									onClick={handleAddCoverPhoto}
 									className='w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-2'>
 									<span>Add cover photo</span>
-								</button>
+								</button> */}
 							</div>
 						)}
 					</div>
@@ -197,21 +198,21 @@ const Profile = () => {
 					{user?.profile?.firstName} {user?.profile?.lastName}
 				</h1>
 				<div className='flex gap-2 mt-4'>
-					<button
+					<FeedButton
 						className={`px-4 py-2 rounded ${
 							editMode === 'inline'
-								? 'bg-blue-600 text-white'
+								? 'bg-blue-500 text-white'
 								: 'bg-gray-200 text-gray-700'
 						}`}
 						onClick={() =>
 							setEditMode(editMode === 'inline' ? null : 'inline')
 						}>
 						Edit Inline
-					</button>
-					<button
+					</FeedButton>
+					<FeedButton
 						className={`px-4 py-2 rounded ${
 							editMode === 'settings'
-								? 'bg-blue-600 text-white'
+								? 'bg-blue-500 text-white'
 								: 'bg-gray-200 text-gray-700'
 						}`}
 						onClick={() =>
@@ -220,11 +221,11 @@ const Profile = () => {
 							)
 						}>
 						Settings
-					</button>
-					<button
+					</FeedButton>
+					<FeedButton
 						className={`px-4 py-2 rounded ${
 							editMode === 'password'
-								? 'bg-blue-600 text-white'
+								? 'bg-blue-500 text-white'
 								: 'bg-gray-200 text-gray-700'
 						}`}
 						onClick={() =>
@@ -233,7 +234,7 @@ const Profile = () => {
 							)
 						}>
 						Change Password
-					</button>
+					</FeedButton>
 				</div>
 				{alert && (
 					<AlertMessage

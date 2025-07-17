@@ -28,19 +28,6 @@ const SubmitPostItem = ({ onPostSubmit }) => {
 		setSelectedGroup('');
 	};
 
-	// useEffect(() => {
-	// 	const fetchUserGroups = async () => {
-	// 		try {
-	// 			// const response = await api.get('/groups');
-
-	// 			setUserGroups(response.data.groups);
-	// 		} catch (error) {
-	// 			console.error('Error fetching groups:', error);
-	// 		}
-	// 	};
-	// 	fetchUserGroups();
-	// }, []);
-
 	useEffect(() => {
 		fetchMyGroups();
 	}, [user]);
@@ -231,37 +218,6 @@ const SubmitPostItem = ({ onPostSubmit }) => {
 				</FeedButton>
 			</div>
 		</form>
-		// <div
-		// 	className='rounded-2xl w-2/3 mt-6  shadow-2xl p-2 flex flex-col justify-center items-center'
-		// 	style={{
-		// 		boxShadow: '0 0 16px 0 #eef4ff',
-		// 	}}>
-		// 	<span className='flex flex-row justify-between items-center w-full'>
-		// 		<ProfilePicture
-		// 			width={50}
-		// 			height={50}
-		// 			picture='https://fastly.picsum.photos/id/58/1280/853.jpg?hmac=YO3QnOm9TpyM5DqsJjoM4CHg8oIq4cMWLpd9ALoP908'
-		// 			// picture={user?.profile?.avatar || undefined}
-		// 		/>
-		// 		<input
-		// 			className=' w-full p-2 rounded-2xl h-20 border-transparent focus:outline-none text-2xl text-center'
-		// 			type='text'
-		// 			placeholder='Share your thoughts with the community :)'
-		// 		/>
-		// 	</span>
-		// 	<hr className='w-full border-gray-200 mb-3' />
-		// 	<span className='flex flex-row gap-3 justify-between items-center mb-3'>
-		// 		<PhotoSizeSelectActualOutlinedIcon
-		// 			fontSize='large'
-		// 			className='text-gray-500'
-		// 		/>
-		// 		<SmartDisplayOutlinedIcon
-		// 			fontSize='large'
-		// 			className='text-gray-500'
-		// 		/>
-		// 		<FeedButton>Submit</FeedButton>
-		// 	</span>
-		// </div>
 	);
 };
 
