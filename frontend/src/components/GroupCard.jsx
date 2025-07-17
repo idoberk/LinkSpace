@@ -1,97 +1,41 @@
-import React from 'react';
-import { useLocation } from 'react-router-dom';
+//
+'use client';
 
-const GroupCard = () => {
-	const location = useLocation();
-	const group = location.state?.group;
-	console.log({ group });
-	if (!group) return null;
-
+const GroupCard = ({ group, onJoin, onLeave, isJoined }) => {
 	return (
-		<div className='border rounded-lg shadow-md p-4 bg-white max-w-xl mx-auto my-4'>
-			{/* תמונת שער */}
-			<h2>{group.name}</h2>
-			<p>{group.description}</p>
-			{group.coverImage?.url && (
-				<img
-					src={group.coverImage.url}
-					alt='Group Cover'
-					className='w-full h-48 object-cover rounded-md mb-4'
-				/>
-			)}
-
-			{/* שם הקבוצה */}
-			<h2 className='text-2xl font-bold text-blue-700 mb-2'>
-				{group.name}
-			</h2>
-
-			{/* תיאור */}
-			{group.description && (
-				<p className='text-gray-700 mb-2'>{group.description}</p>
-			)}
-
-			{/* קטגוריה */}
-			{group.category && (
-				<div className='mb-2'>
-					<span className='text-sm text-gray-500'>Category: </span>
-					<span className='text-sm font-semibold'>
-						{group.category}
-					</span>
+		<div className='bg-white rounded-lg shadow-md p-4 mb-4'>
+			<div className='flex items-center justify-between'>
+				<div className='flex items-center'>
+					{/* <div className='w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg'>
+						{group.name.charAt(0).toUpperCase()}
+					</div> */}
+					<div className='ml-3'>
+						<h3 className='font-semibold text-lg'>{group.name}</h3>
+						<p className='text-gray-600 text-sm'>
+							{group.description}
+						</p>
+						<p>{group.category}</p>
+						<p className='text-gray-500 text-xs'>
+							{group.members?.length || 0} members
+						</p>
+					</div>
 				</div>
-			)}
-
-			{/* מנהל */}
-			{group.admin && (
-				<div className='mb-2'>
-					<span className='text-sm text-gray-500'>Admin: </span>
-					<span className='text-sm font-semibold'>
-						{group.admin.profile?.firstName}{' '}
-						{group.admin.profile?.lastName}
-					</span>
+				<div>
+					{isJoined ? (
+						<button
+							onClick={() => onLeave(group._id)}
+							className='bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm'>
+							Leave
+						</button>
+					) : (
+						<button
+							onClick={() => onJoin(group._id)}
+							className='bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm'>
+							Join
+						</button>
+					)}
 				</div>
-			)}
-
-			{/* חברים */}
-			{group.members && (
-				<div className='mb-2'>
-					<span className='text-sm text-gray-500'>Members: </span>
-					<span className='text-sm font-semibold'>
-						{group.members.length}
-					</span>
-				</div>
-			)}
-
-			{/* תאריך יצירה */}
-			{group.createdAt && (
-				<div className='mb-2 text-xs text-gray-400'>
-					Created at: {new Date(group.createdAt).toLocaleDateString()}
-				</div>
-			)}
-
-			{/* פוסטים אחרונים (אם יש) */}
-			{group.posts && group.posts.length > 0 && (
-				<div className='mt-4'>
-					<h3 className='text-lg font-semibold mb-2'>
-						Recent Posts:
-					</h3>
-					<ul className='space-y-2'>
-						{group.posts.slice(0, 3).map((post) => (
-							<li key={post._id} className='border-b pb-2'>
-								<div className='font-bold'>
-									{post.author?.profile?.firstName}{' '}
-									{post.author?.profile?.lastName}
-								</div>
-								<div className='text-gray-700'>
-									{post.content}
-								</div>
-								<div className='text-xs text-gray-400'>
-									{new Date(post.createdAt).toLocaleString()}
-								</div>
-							</li>
-						))}
-					</ul>
-				</div>
-			)}
+			</div>
 		</div>
 	);
 };

@@ -275,7 +275,7 @@ const Profile = () => {
 				<div className='flex justify-center items-center'>
 					<SubmitPostItem onPostSubmit={handlePostSubmit} />
 				</div>
-				{/* {posts
+				{posts
 					.filter((post) => post.author._id === user._id)
 					.map((post) => (
 						<Post
@@ -283,7 +283,7 @@ const Profile = () => {
 							post={post}
 							onPostChange={fetchPosts}
 						/>
-					))} */}
+					))}
 			</div>
 		</div>
 	);

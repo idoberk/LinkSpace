@@ -474,14 +474,14 @@ const Statistics = () => {
 								{statistics.commentsWithUsers}
 							</p>
 						</div>
-						<div className='bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow'>
+						{/* <div className='bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow'>
 							<h3 className='text-lg font-semibold text-gray-700'>
 								Anonymous Comments
 							</h3>
 							<p className='text-3xl font-bold text-orange-600'>
 								{statistics.anonymousComments}
 							</p>
-						</div>
+						</div> */}
 						<div className='bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow'>
 							<h3 className='text-lg font-semibold text-gray-700'>
 								Active Users

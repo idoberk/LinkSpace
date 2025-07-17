@@ -1,9 +1,7 @@
 const User = require('../models/User');
 const { handleErrors } = require('../middleware/errorHandler');
 const { createError } = require('../utils/errorUtils');
-const {
-	setUserStatToCount,
-} = require('../services/userService');
+const { setUserStatToCount } = require('../services/userService');
 
 // Operations users can do with other users (search users, send friend requests, etc...)
 

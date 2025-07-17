@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import api from '../lib/axios';
+import FeedButton from './FeedButton';
 
 const CommentForm = ({ postId, onCommentAdded }) => {
 	const [content, setContent] = useState('');
@@ -37,19 +38,19 @@ const CommentForm = ({ postId, onCommentAdded }) => {
 
 	return (
 		<form onSubmit={handleSubmit} className='flex flex-col gap-2 mt-2'>
-			<textarea
+			<input
 				className='border rounded p-2'
 				placeholder="'Write comment..."
 				value={content}
 				onChange={(e) => setContent(e.target.value)}
 				disabled={loading}
 			/>
-			<button
+			<FeedButton
 				type='submit'
 				className='bg-blue-500 text-white rounded px-4 py-2'
 				disabled={loading}>
 				{loading ? 'Sending...' : 'Comment'}
-			</button>
+			</FeedButton>
 			{error && <div className='text-red-500'>{error}</div>}
 		</form>
 	);

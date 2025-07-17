@@ -1,10 +1,5 @@
 import FriendsDisplay from '../components/FriendsDisplay';
-
 import FriendsRequest from '../components/FriendsRequest';
-import TopBar from '../components/TopBar';
-
-import GroupsDisplay from '../components/GroupsDisplay';
-
 import SideBar from '../components/SideBar';
 import Feed from '../components/Feed';
 import { useUser } from '../hooks/useUser';
