@@ -145,31 +145,7 @@ const Groups = () => {
 
 	const handleLeaveGroup = async (groupId) => {
 		const currentGroup = myGroups.find((group) => group._id === groupId);
-
-		// if (currentGroup && currentGroup.creator === user._id) {
-		// 	try {
-		// 		await api.delete(`/groups/${groupId}`);
-		// 		setMyGroups(myGroups.filter((group) => group._id !== groupId));
-		// 		setUser({
-		// 			...user,
-		// 			groups: user.groups.filter((id) => id !== groupId),
-		// 		});
-		// 	} catch (error) {
-		// 		console.error('Error leaving group:', error);
-		// 	}
-		// 	try {
-		// 		await api.post(`/groups/${groupId}/leave`);
-		// 		setMyGroups(myGroups.filter((group) => group._id !== groupId));
-		// 		setUser({
-		// 			...user,
-		// 			groups: user.groups.filter((id) => id !== groupId),
-		// 		});
-		// 	} catch (error) {
-		// 		console.error('Error leaving group:', error);
-		// 	}
-		// }
 		if (currentGroup && currentGroup.creator._id === user._id) {
-			// המשתמש הוא היוצר - רק מחיקה
 			if (
 				window.confirm(
 					'You are the creator of this group. Do you want to delete it?',
@@ -192,7 +168,6 @@ const Groups = () => {
 			return;
 		}
 
-		// המשתמש אינו היוצר - עזיבה רגילה
 		try {
 			await api.post(`/groups/${groupId}/leave`);
 			setMyGroups(myGroups.filter((group) => group._id !== groupId));
