@@ -27,11 +27,11 @@ const SideBar = () => {
 					navigate('/groups', { state: { user } });
 				}}
 			/>
-			<SideBarItem
+			{/* <SideBarItem
 				icon={<SupervisedUserCircleRoundedIcon />}
 				text='Find Users'
 				onClick={() => navigate('/users')}
-			/>
+			/> */}
 			<SideBarItem
 				icon={<ChatBubbleOutlineOutlinedIcon />}
 				text='Messages'
@@ -39,12 +39,12 @@ const SideBar = () => {
 					navigate('/messages', { state: { user } });
 				}}
 			/>
-			<SideBarItem
+			{/* <SideBarItem
 				text='Canvas'
 				onClick={() => {
 					navigate('/canvas');
 				}}
-			/>
+			/> */}
 			<SideBarItem
 				icon={<InsightsRoundedIcon />}
 				text='Insights'
