@@ -10,6 +10,10 @@ const Feed = () => {
 	const { user } = useUser();
 	const [posts, setPosts] = useState([]);
 	const [loading, setLoading] = useState(false);
+
+	const [page, setPage] = useState(1);
+	const [hasMore, setHasMore] = useState(true);
+
 	// const location = useLocation();
 	// const params = new URLSearchParams(location.search);
 	// const searchTerm = params.get('search') || '';
@@ -20,22 +24,64 @@ const Feed = () => {
 	// 	location.pathname === '/home' ||
 	// 	location.pathname.startsWith('/profile');
 
-	const fetchPosts = async () => {
+	// const fetchPosts = async () => {
+	// 	setLoading(true);
+	// 	try {
+	// 		const response = await api.get('/posts/search', {
+	// 			params: { visibility: group },
+	// 			// params: { visibility: group, content: searchText },
+	// 		});
+	// 		console.log(response.data.posts);
+	// 		setPosts(response.data.posts);
+	// 	} catch (error) {
+	// 		console.error('Error fetching posts:', error);
+	// 		setPosts([]);
+	// 	} finally {
+	// 		setLoading(false);
+	// 	}
+	// };
+	useEffect(() => {
+		const handleScroll = () => {
+			if (
+				window.innerHeight + window.scrollY >=
+					document.body.offsetHeight - 200 &&
+				hasMore &&
+				!loading
+			) {
+				setPage((prevPage) => prevPage + 1);
+			}
+		};
+
+		window.addEventListener('scroll', handleScroll);
+		return () => window.removeEventListener('scroll', handleScroll);
+	}, [hasMore, loading]);
+
+	const fetchPosts = async (pageToLoad = 1) => {
 		setLoading(true);
 		try {
 			const response = await api.get('/posts/search', {
-				params: { visibility: group },
-				// params: { visibility: group, content: searchText },
+				params: { visibility: group, page: pageToLoad, limit: 10 },
 			});
-			console.log(response.data.posts);
-			setPosts(response.data.posts);
+
+			const newPosts = response.data.posts;
+			if (pageToLoad === 1) {
+				setPosts(newPosts);
+			} else {
+				setPosts((prev) => [...prev, ...newPosts]);
+			}
+
+			if (newPosts.length < 10) {
+				setHasMore(false);
+			}
 		} catch (error) {
 			console.error('Error fetching posts:', error);
 			setPosts([]);
+			setHasMore(false);
 		} finally {
 			setLoading(false);
 		}
 	};
+
 	const filteredPosts = posts.filter((post) => {
 		if (post.visibility === 'public') return true;
 
@@ -49,11 +95,16 @@ const Feed = () => {
 		return false;
 	});
 
+	// useEffect(() => {
+	// 	if (user) {
+	// 		fetchPosts();
+	// 	}
+	// }, [user]);
 	useEffect(() => {
 		if (user) {
-			fetchPosts();
+			fetchPosts(page);
 		}
-	}, [user]);
+	}, [user, page]);
 
 	const handlePostSubmit = () => {
 		fetchPosts();
