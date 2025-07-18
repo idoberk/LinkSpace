@@ -43,11 +43,7 @@ const App = () => {
 								path='/profile/:userId'
 								element={<Profile />}
 							/>
-							<Route path='/groups' element={<GroupsDisplay />} />
-							<Route
-								path='/create-group'
-								element={<CreateGroup />}
-							/>
+							<Route path='/groups' element={<Groups />} />
 
 							<Route
 								path='/statistics'
